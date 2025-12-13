@@ -13,11 +13,14 @@
 import { createRouter } from "@aibadgr/router";
 
 // Initialize router (this runs once per flow execution)
+const apiKey = process.env.AIBADGR_API_KEY || $credentials?.aibadgr?.apiKey;
+if (!apiKey) {
+  throw new Error("AIBADGR_API_KEY not found. Please set it in Flowise environment or credentials.");
+}
+
 const router = createRouter({
   providers: {
-    aibadgr: { 
-      apiKey: process.env.AIBADGR_API_KEY || $credentials?.aibadgr?.apiKey || "your-key-here"
-    },
+    aibadgr: { apiKey },
     // Optional: Add more providers from Flowise credentials
     // openai: { apiKey: process.env.OPENAI_API_KEY || $credentials?.openai?.apiKey },
     // anthropic: { apiKey: process.env.ANTHROPIC_API_KEY || $credentials?.anthropic?.apiKey }

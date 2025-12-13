@@ -48,7 +48,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Only handle POST to /v1/chat/completions
-  if (req.method !== "POST" || !req.url.includes("/chat/completions")) {
+  if (req.method !== "POST" || !req.url.startsWith("/v1/chat/completions")) {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found" }));
     return;

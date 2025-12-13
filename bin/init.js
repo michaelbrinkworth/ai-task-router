@@ -149,8 +149,12 @@ console.log('✅ Created .gitignore');
 
 console.log('\n🎉 Project initialized successfully!\n');
 console.log('Next steps:');
-console.log(`  1. cd ${targetDir !== '.' ? targetDir : 'into the directory'}`);
-console.log('  2. npm install');
+if (targetDir !== '.') {
+  console.log(`  1. cd ${targetDir}`);
+  console.log('  2. npm install');
+} else {
+  console.log('  1. npm install');
+}
 console.log('  3. cp .env.example .env');
 console.log('  4. Edit .env and add your AIBADGR_API_KEY (get one at https://aibadgr.com)');
 console.log('  5. npm start');

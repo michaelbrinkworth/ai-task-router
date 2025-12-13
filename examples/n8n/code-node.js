@@ -12,11 +12,16 @@
 // Import the router (assumes @aibadgr/router is installed in n8n)
 import { createRouter } from "@aibadgr/router";
 
+// Validate API key
+if (!$env.AIBADGR_API_KEY) {
+  throw new Error("AIBADGR_API_KEY not found. Please set it in your n8n environment variables.");
+}
+
 // Create router with your configuration
 const router = createRouter({
   providers: {
     aibadgr: { 
-      apiKey: $env.AIBADGR_API_KEY || "your-key-here" 
+      apiKey: $env.AIBADGR_API_KEY
     },
     // Optional: Add more providers from n8n credentials
     // openai: { apiKey: $credentials.openai.apiKey },
