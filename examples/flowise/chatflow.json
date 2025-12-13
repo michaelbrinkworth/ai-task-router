@@ -1,0 +1,177 @@
+{
+  "nodes": [
+    {
+      "width": 300,
+      "height": 500,
+      "id": "chatInput_0",
+      "position": {
+        "x": 100,
+        "y": 250
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatInput_0",
+        "label": "Chat Input",
+        "version": 1,
+        "name": "chatInput",
+        "type": "ChatInput",
+        "baseClasses": ["ChatInput"],
+        "category": "Chat",
+        "description": "User input for chat",
+        "inputParams": [],
+        "inputAnchors": [],
+        "inputs": {},
+        "outputAnchors": [
+          {
+            "id": "chatInput_0-output-chatInput-ChatInput",
+            "name": "chatInput",
+            "label": "ChatInput",
+            "type": "ChatInput"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 100,
+        "y": 250
+      },
+      "dragging": false
+    },
+    {
+      "width": 300,
+      "height": 600,
+      "id": "customFunction_0",
+      "position": {
+        "x": 500,
+        "y": 200
+      },
+      "type": "customNode",
+      "data": {
+        "id": "customFunction_0",
+        "label": "AI Badgr Router",
+        "version": 1,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": ["CustomFunction"],
+        "category": "Custom",
+        "description": "Routes LLM requests through @aibadgr/router with cost optimization",
+        "inputParams": [
+          {
+            "label": "Function Code",
+            "name": "functionCode",
+            "type": "code",
+            "rows": 10,
+            "default": "import { createRouter } from '@aibadgr/router';\n\nconst router = createRouter({\n  providers: {\n    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }\n  }\n});\n\nconst result = await router.run({\n  task: 'chat',\n  input: $input,\n  messages: $flow.chatHistory || []\n});\n\nconsole.log(`Provider: ${result.provider}, Cost: $${result.cost?.estimatedUsd}`);\n\nreturn result.outputText;"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "ChatInput"
+          }
+        ],
+        "inputs": {
+          "functionCode": "import { createRouter } from '@aibadgr/router';\n\nconst router = createRouter({\n  providers: {\n    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }\n  }\n});\n\nconst result = await router.run({\n  task: 'chat',\n  input: $input,\n  messages: $flow.chatHistory || []\n});\n\nconsole.log(`Provider: ${result.provider}, Cost: $${result.cost?.estimatedUsd}`);\n\nreturn result.outputText;",
+          "input": "{{chatInput_0.data.instance}}"
+        },
+        "outputAnchors": [
+          {
+            "id": "customFunction_0-output-customFunction-CustomFunction",
+            "name": "output",
+            "label": "Output",
+            "type": "String"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 500,
+        "y": 200
+      },
+      "dragging": false
+    },
+    {
+      "width": 300,
+      "height": 500,
+      "id": "chatOutput_0",
+      "position": {
+        "x": 900,
+        "y": 250
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatOutput_0",
+        "label": "Chat Output",
+        "version": 1,
+        "name": "chatOutput",
+        "type": "ChatOutput",
+        "baseClasses": ["ChatOutput"],
+        "category": "Chat",
+        "description": "Display chat response",
+        "inputParams": [],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "String"
+          }
+        ],
+        "inputs": {
+          "input": "{{customFunction_0.data.instance}}"
+        },
+        "outputAnchors": [],
+        "outputs": {},
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 900,
+        "y": 250
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "chatInput_0",
+      "sourceHandle": "chatInput_0-output-chatInput-ChatInput",
+      "target": "customFunction_0",
+      "targetHandle": "customFunction_0-input-input-ChatInput",
+      "type": "buttonedge",
+      "id": "chatInput_0-chatInput_0-output-chatInput-ChatInput-customFunction_0-customFunction_0-input-input-ChatInput"
+    },
+    {
+      "source": "customFunction_0",
+      "sourceHandle": "customFunction_0-output-customFunction-CustomFunction",
+      "target": "chatOutput_0",
+      "targetHandle": "chatOutput_0-input-input-String",
+      "type": "buttonedge",
+      "id": "customFunction_0-customFunction_0-output-customFunction-CustomFunction-chatOutput_0-chatOutput_0-input-input-String"
+    }
+  ],
+  "flowData": {
+    "name": "AI Badgr Router Chatflow",
+    "description": "Cost-optimized chat using @aibadgr/router with automatic fallback",
+    "category": "Chatbot",
+    "deployed": false,
+    "isPublic": false,
+    "chatbotConfig": {
+      "welcomeMessage": "Hi! I'm powered by AI Badgr Router - cost-optimized AI with automatic fallback. How can I help you?",
+      "backgroundColor": "#ffffff",
+      "fontSize": 16,
+      "botMessage": {
+        "backgroundColor": "#f7f8ff",
+        "textColor": "#303235"
+      },
+      "userMessage": {
+        "backgroundColor": "#3B81F6",
+        "textColor": "#ffffff"
+      }
+    }
+  }
+}

@@ -1,6 +1,79 @@
 # @aibadgr/router
 
-A tiny, task-based LLM router with **AI Badgr** as the default provider, supporting intelligent routing to **OpenAI** and **Anthropic** (Claude) with automatic fallback.
+[![npm version](https://img.shields.io/npm/v/@aibadgr/router.svg)](https://www.npmjs.com/package/@aibadgr/router)
+[![npm downloads](https://img.shields.io/npm/dm/@aibadgr/router.svg)](https://www.npmjs.com/package/@aibadgr/router)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node Version](https://img.shields.io/node/v/@aibadgr/router.svg)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+
+> **Task-based LLM router (OpenAI-compatible)** — cheap default (AI Badgr) + optional OpenAI/Claude with automatic fallback and cost tracking.
+
+## Why?
+
+Most LLM apps waste money by routing everything to expensive providers. **@aibadgr/router** solves this:
+
+- **Save 80%+ on costs** by defaulting to AI Badgr (OpenAI-compatible, 10x cheaper)
+- **Route by task** — send code to Claude, reasoning to GPT-4, simple tasks to the cheap default
+- **Automatic fallback** — handle rate limits, timeouts, and errors without manual retry logic
+- **Drop-in replacement** — OpenAI-compatible API, works with existing tools (Continue, Cline, n8n, Flowise)
+- **Zero config** — works with just `AIBADGR_API_KEY`, add premium providers only when needed
+- **Track every dollar** — built-in cost estimation per request
+- **Type-safe** — full TypeScript support with streaming
+
+Perfect for: AI agents, chatbots, workflows, developer tools, any app making multiple LLM calls.
+
+## 30-Second Quickstart
+
+```bash
+npm install @aibadgr/router
+```
+
+```javascript
+import { createRouter } from "@aibadgr/router";
+
+// Cost-first: AI Badgr only (10x cheaper than OpenAI)
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
+  }
+});
+
+const result = await router.run({
+  task: "summarize",
+  input: "Long article text..."
+});
+
+console.log(result.outputText);
+console.log("Cost:", result.cost?.estimatedUsd); // ~$0.0001
+console.log("Provider:", result.provider);       // "aibadgr"
+```
+
+**Multi-provider per task:**
+
+```javascript
+// Premium providers for specialized tasks
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    openai: { apiKey: process.env.OPENAI_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  routes: {
+    code: "anthropic",     // Claude for code → $0.003/request
+    reasoning: "openai",   // GPT-4 for hard problems → $0.01/request
+    // Everything else → aibadgr (default) → $0.0001/request
+  },
+  fallback: {
+    chat: ["aibadgr", "openai"] // Auto-retry on errors/rate-limits
+  }
+});
+
+// Goes to Claude, falls back to AI Badgr if Claude is down
+const code = await router.run({ 
+  task: "code", 
+  input: "Write a binary search in TypeScript" 
+});
+```
 
 ## Features
 
@@ -19,64 +92,9 @@ A tiny, task-based LLM router with **AI Badgr** as the default provider, support
 npm install @aibadgr/router
 ```
 
-## Quick Start
+## More Examples
 
-### Example 1: Cheapest Default (AI Badgr only)
-
-```javascript
-import { createRouter } from "@aibadgr/router";
-
-const router = createRouter({
-  providers: {
-    aibadgr: {
-      apiKey: process.env.AIBADGR_API_KEY,
-    },
-  },
-});
-
-const result = await router.run({
-  task: "summarize",
-  input: "Long article text here...",
-});
-
-console.log(result.outputText);
-console.log("Cost:", result.cost?.estimatedUsd);
-```
-
-### Example 2: Smart Routing (Code → Claude, Reasoning → OpenAI)
-
-```javascript
-import { createRouter } from "@aibadgr/router";
-
-const router = createRouter({
-  providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
-  },
-  routes: {
-    code: "anthropic",      // Claude for code
-    reasoning: "openai",    // GPT for reasoning
-  },
-  fallback: {
-    chat: ["aibadgr", "openai"], // Fallback chain
-  },
-});
-
-// This goes to Claude
-const codeResult = await router.run({
-  task: "code",
-  input: "Write a binary search function in TypeScript",
-});
-
-// This goes to OpenAI
-const reasonResult = await router.run({
-  task: "reasoning",
-  input: "Explain the trolley problem",
-});
-```
-
-### Example 3: Streaming
+### Streaming
 
 ```javascript
 const stream = await router.chat({
@@ -89,7 +107,7 @@ for await (const chunk of stream) {
 }
 ```
 
-### Example 4: Embeddings
+### Embeddings
 
 ```javascript
 const embeddings = await router.embed({
