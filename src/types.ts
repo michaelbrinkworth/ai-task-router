@@ -111,6 +111,7 @@ export interface ChatStreamChunk {
   raw?: any;
 }
 
+// Note: Streaming requires ES2018+ lib in your tsconfig.json
 export type ChatStream = AsyncIterable<ChatStreamChunk>;
 
 export interface EmbeddingsResponse {

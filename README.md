@@ -389,6 +389,16 @@ Full TypeScript support included:
 import { createRouter, ChatRunRequest, EmbeddingsRunRequest } from "@aibadgr/router";
 ```
 
+**Note**: For streaming support, your `tsconfig.json` needs ES2018+ lib:
+
+```json
+{
+  "compilerOptions": {
+    "lib": ["ES2018"]
+  }
+}
+```
+
 ## Requirements
 
 - Node.js 18+
