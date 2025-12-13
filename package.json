@@ -6,6 +6,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "aibadgr-router": "./bin/init.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -60,6 +63,8 @@
   },
   "files": [
     "dist",
+    "bin",
+    "examples",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"

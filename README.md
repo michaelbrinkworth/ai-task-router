@@ -24,6 +24,18 @@ Perfect for: AI agents, chatbots, workflows, developer tools, any app making mul
 
 ## 30-Second Quickstart
 
+**Option 1: Quick Start (using init)**
+
+```bash
+npx @aibadgr/router init my-project
+cd my-project
+npm install
+# Add your AIBADGR_API_KEY to .env
+npm start
+```
+
+**Option 2: Manual Install**
+
 ```bash
 npm install @aibadgr/router
 ```
