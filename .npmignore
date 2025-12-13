@@ -1,0 +1,42 @@
+# Source files (only ship dist/)
+src/
+tsconfig.json
+vitest.config.ts
+
+# Tests
+*.test.ts
+*.test.js
+__tests__/
+coverage/
+
+# Examples (include in npm package for users)
+# examples/ - commented out to include
+
+# Documentation (include)
+# docs/ - commented out to include
+# README.md - commented out to include
+
+# Development files
+.gitignore
+.eslintrc*
+.prettierrc*
+*.log
+npm-debug.log*
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts to exclude
+*.tsbuildinfo
+node_modules/
+
+# Misc
+.DS_Store
+Thumbs.db
