@@ -1,0 +1,75 @@
+{
+  "name": "AI Badgr Router - Document Processing",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Import @aibadgr/router\nimport { createRouter } from '@aibadgr/router';\n\n// Configure router\nconst router = createRouter({\n  providers: {\n    aibadgr: { apiKey: $env.AIBADGR_API_KEY }\n  }\n});\n\n// Get input text\nconst inputText = $input.first().json.text || 'Sample document text here';\n\n// Summarize\nconst summary = await router.run({\n  task: 'summarize',\n  input: inputText,\n  maxTokens: 150\n});\n\n// Extract key points\nconst extract = await router.run({\n  task: 'extract',\n  input: `Extract 3-5 key points from this text: ${inputText}`\n});\n\n// Calculate total cost\nconst totalCost = (summary.cost?.estimatedUsd || 0) + (extract.cost?.estimatedUsd || 0);\n\nreturn [{\n  json: {\n    input: inputText,\n    summary: summary.outputText,\n    keyPoints: extract.outputText,\n    metadata: {\n      providers: {\n        summary: summary.provider,\n        extract: extract.provider\n      },\n      totalCost: totalCost,\n      totalLatency: summary.latencyMs + extract.latencyMs\n    }\n  }\n}];"
+      },
+      "id": "code",
+      "name": "AI Badgr Router",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "output",
+      "name": "Output",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "AI Badgr Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Badgr Router": {
+      "main": [
+        [
+          {
+            "node": "Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "AI",
+      "id": "ai"
+    },
+    {
+      "name": "LLM",
+      "id": "llm"
+    }
+  ],
+  "meta": {
+    "instanceId": "example"
+  }
+}
