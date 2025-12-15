@@ -1,6 +1,6 @@
 {
   "name": "@aibadgr/router",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Task-based LLM router (OpenAI-compatible) — cheap default (AI Badgr) + optional OpenAI/Claude with fallback, cost tracking, and routing",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
