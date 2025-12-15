@@ -24,18 +24,6 @@ Perfect for: AI agents, chatbots, workflows, developer tools, any app making mul
 
 ## 30-Second Quickstart
 
-**Option 1: Quick Start (using init)**
-
-```bash
-npx @aibadgr/router init my-project
-cd my-project
-npm install
-# Add your AIBADGR_API_KEY to .env
-npm start
-```
-
-**Option 2: Manual Install**
-
 ```bash
 npm install @aibadgr/router
 ```
@@ -43,7 +31,6 @@ npm install @aibadgr/router
 ```javascript
 import { createRouter } from "@aibadgr/router";
 
-// Cost-first: AI Badgr only (10x cheaper than OpenAI)
 const router = createRouter({
   providers: {
     aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
@@ -51,41 +38,34 @@ const router = createRouter({
 });
 
 const result = await router.run({
-  task: "summarize",
-  input: "Long article text..."
+  task: "chat",
+  input: "Hello, world!"
 });
 
 console.log(result.outputText);
-console.log("Cost:", result.cost?.estimatedUsd); // ~$0.0001
-console.log("Provider:", result.provider);       // "aibadgr"
 ```
 
-**Multi-provider per task:**
+**That's it!** The router handles everything else automatically.
+
+<details>
+<summary><b>Want to add OpenAI or Claude?</b> (optional)</summary>
 
 ```javascript
-// Premium providers for specialized tasks
 const router = createRouter({
   providers: {
     aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+    openai: { apiKey: process.env.OPENAI_API_KEY },      // optional
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY } // optional
   },
   routes: {
-    code: "anthropic",     // Claude for code → $0.003/request
-    reasoning: "openai",   // GPT-4 for hard problems → $0.01/request
-    // Everything else → aibadgr (default) → $0.0001/request
-  },
-  fallback: {
-    chat: ["aibadgr", "openai"] // Auto-retry on errors/rate-limits
+    code: "anthropic",   // Use Claude for code
+    reasoning: "openai"  // Use GPT-4 for reasoning
+    // Everything else uses aibadgr (10x cheaper)
   }
 });
-
-// Goes to Claude, falls back to AI Badgr if Claude is down
-const code = await router.run({ 
-  task: "code", 
-  input: "Write a binary search in TypeScript" 
-});
 ```
+
+</details>
 
 ## Features
 
