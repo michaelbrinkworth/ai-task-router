@@ -1,6 +1,6 @@
 {
   "name": "@aibadgr/router",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Intelligent LLM routing library for OpenAI, Anthropic Claude, and AI Badgr. Cost-optimized AI agent router with automatic fallback, streaming support, and built-in cost tracking. Perfect for chatbots, AI workflows, and multi-provider applications.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
