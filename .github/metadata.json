@@ -1,0 +1,112 @@
+{
+  "name": "@aibadgr/router",
+  "displayName": "AI Task Router",
+  "tagline": "Intelligent LLM routing for cost optimization and automatic failover",
+  "description": "Cost-optimized AI routing library for OpenAI, Anthropic Claude, and AI Badgr. Automatically route tasks to the most cost-effective provider while maintaining quality. Features automatic fallback, streaming support, and built-in cost tracking.",
+  "keywords": [
+    "ai", "llm", "router", "openai", "anthropic", "claude", "gpt-4", "chatgpt",
+    "cost-optimization", "ai-agents", "typescript", "nodejs", "streaming", "embeddings",
+    "chatbot", "workflow-automation", "n8n", "flowise", "langchain", "cost-tracking",
+    "fallback-handler", "multi-provider", "openai-api", "ai-gateway", "llm-proxy"
+  ],
+  "categories": [
+    "Developer Tools",
+    "APIs",
+    "Artificial Intelligence",
+    "Libraries",
+    "SDKs"
+  ],
+  "topics": [
+    "ai", "llm", "router", "openai", "anthropic", "claude", "gpt-4", "chatgpt",
+    "cost-optimization", "ai-agents", "typescript", "nodejs", "streaming", "embeddings",
+    "chatbot", "workflow-automation", "n8n", "flowise", "machine-learning", "nlp"
+  ],
+  "features": [
+    "Intelligent task-based routing",
+    "80%+ cost savings with smart provider selection",
+    "Automatic fallback and error handling",
+    "OpenAI-compatible API",
+    "Real-time streaming support",
+    "Built-in cost tracking and estimation",
+    "Full TypeScript support",
+    "Zero configuration required",
+    "Multiple provider support (OpenAI, Anthropic, AI Badgr)",
+    "Event hooks for monitoring"
+  ],
+  "useCases": [
+    "AI Agents & Assistants",
+    "Chatbots & Customer Support",
+    "Workflow Automation (n8n, Flowise, Zapier)",
+    "Developer Tools (Continue, Cline, Cursor, Aider)",
+    "Data Processing & Batch Operations",
+    "Educational Applications",
+    "Content Generation",
+    "Code Review & Analysis"
+  ],
+  "integrations": [
+    "Continue", "Cursor", "Cline", "Aider", "n8n", "Flowise", "Zapier", "Make",
+    "LangChain", "Vercel AI SDK", "LlamaIndex", "AutoGPT"
+  ],
+  "languages": ["TypeScript", "JavaScript"],
+  "platforms": ["Node.js"],
+  "license": "MIT",
+  "repository": "https://github.com/michaelbrinkworth/ai-task-router",
+  "homepage": "https://github.com/michaelbrinkworth/ai-task-router#readme",
+  "documentation": "https://github.com/michaelbrinkworth/ai-task-router/tree/main/docs",
+  "bugs": "https://github.com/michaelbrinkworth/ai-task-router/issues",
+  "author": {
+    "name": "Michael Brinkworth",
+    "email": "michael@aibadgr.com",
+    "url": "https://aibadgr.com"
+  },
+  "maintainers": [
+    {
+      "name": "Michael Brinkworth",
+      "email": "michael@aibadgr.com"
+    }
+  ],
+  "social": {
+    "twitter": "@aibadgr",
+    "linkedin": "https://linkedin.com/company/aibadgr",
+    "github": "https://github.com/michaelbrinkworth"
+  },
+  "stats": {
+    "bundle_size": "< 100KB",
+    "dependencies": "2 (openai, @anthropic-ai/sdk)",
+    "node_version": ">=18.0.0"
+  },
+  "seo": {
+    "primary_keywords": [
+      "ai router",
+      "llm router",
+      "openai router",
+      "cost optimization",
+      "ai fallback"
+    ],
+    "long_tail_keywords": [
+      "intelligent llm routing library nodejs",
+      "openai compatible router typescript",
+      "reduce ai api costs nodejs",
+      "automatic ai failover handler",
+      "multi-provider ai integration"
+    ],
+    "competitor_keywords": [
+      "langchain alternative",
+      "openai wrapper",
+      "ai gateway",
+      "llm proxy"
+    ]
+  },
+  "alternativeSearchTerms": [
+    "AI load balancer",
+    "LLM middleware",
+    "OpenAI cost optimizer",
+    "Multi-model AI router",
+    "ChatGPT API wrapper",
+    "Claude API router",
+    "AI API gateway",
+    "LLM orchestration",
+    "AI cost tracker",
+    "Intelligent AI routing"
+  ]
+}

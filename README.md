@@ -5,24 +5,54 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/node/v/@aibadgr/router.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/michaelbrinkworth/ai-task-router.svg)](https://github.com/michaelbrinkworth/ai-task-router)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/michaelbrinkworth/ai-task-router/pulls)
 
-> **Task-based LLM router (OpenAI-compatible)** — cheap default (AI Badgr) + optional OpenAI/Claude with automatic fallback and cost tracking.
+> **Intelligent LLM Router for OpenAI, Claude & More** — Cost-optimized AI routing with automatic fallback, streaming support, and built-in cost tracking. The smart way to use multiple AI providers.
 
-## Why?
+## 🎯 What is AI Task Router?
 
-Most LLM apps waste money by routing everything to expensive providers. **@aibadgr/router** solves this:
+**AI Task Router** is an intelligent routing library that automatically directs your AI requests to the most cost-effective provider while maintaining quality. Think of it as a smart proxy that saves you 80%+ on AI costs by routing simple tasks to cheaper providers and complex tasks to premium models like GPT-4 or Claude.
 
-- **Save 80%+ on costs** by defaulting to AI Badgr (OpenAI-compatible, 10x cheaper)
-- **Route by task** — send code to Claude, reasoning to GPT-4, simple tasks to the cheap default
-- **Automatic fallback** — handle rate limits, timeouts, and errors without manual retry logic
-- **Drop-in replacement** — OpenAI-compatible API, works with existing tools (Continue, Cline, n8n, Flowise)
-- **Zero config** — works with just `AIBADGR_API_KEY`, add premium providers only when needed
-- **Track every dollar** — built-in cost estimation per request
-- **Type-safe** — full TypeScript support with streaming
+### Key Benefits
 
-Perfect for: AI agents, chatbots, workflows, developer tools, any app making multiple LLM calls.
+- 💰 **Save 80%+ on AI costs** - Default to AI Badgr (10x cheaper than OpenAI), use premium providers only when needed
+- 🎯 **Intelligent task-based routing** - Send code to Claude, reasoning to GPT-4, simple tasks to budget providers
+- 🔄 **Automatic failover** - Handle rate limits, timeouts, and API errors without manual retry logic
+- 🚀 **Drop-in OpenAI replacement** - Compatible with Continue, Cline, Cursor, n8n, Flowise, and any OpenAI client
+- ⚡ **Zero configuration** - Works with just an API key, expand to multi-provider when ready
+- 📊 **Built-in cost tracking** - Know exactly how much each request costs across all providers
+- 🔒 **Type-safe & tested** - Full TypeScript support with comprehensive test coverage
+- 📡 **Real-time streaming** - Support for streaming responses from all providers
 
-## 30-Second Quickstart
+## Why AI Task Router?
+
+Most AI applications waste money by routing everything to expensive providers like OpenAI GPT-4. **AI Task Router** intelligently distributes your requests:
+
+## Why AI Task Router?
+
+Most AI applications waste money by routing everything to expensive providers like OpenAI GPT-4. **AI Task Router** intelligently distributes your requests:
+
+| Task Type | Without Router | With Router | Savings |
+|-----------|---------------|-------------|---------|
+| Simple chat | GPT-4 ($0.03/1K) | AI Badgr ($0.003/1K) | 90% |
+| Code review | GPT-4 ($0.03/1K) | Claude Sonnet ($0.015/1K) | 50% |
+| Summarization | GPT-4 ($0.03/1K) | AI Badgr ($0.003/1K) | 90% |
+| Complex reasoning | GPT-4 ($0.03/1K) | GPT-4 (when needed) | 0% |
+
+**Real-world example:** An AI chatbot making 1M requests/month could save $27,000/month by routing appropriately.
+
+### Perfect For
+
+- 🤖 **AI Agents & Assistants** - Reduce costs for multi-step workflows
+- 💬 **Chatbots & Customer Support** - Handle high-volume conversations affordably  
+- 🔄 **Workflow Automation** - n8n, Flowise, Zapier integrations
+- 👨‍💻 **Developer Tools** - Continue, Cline, Cursor, Aider extensions
+- 📊 **Data Processing** - Batch processing, summarization, classification
+- 🎓 **Educational Apps** - Cost-effective AI tutoring and learning tools
+
+## 🚀 Quick Start (30 seconds)
+
 
 ```bash
 npm install @aibadgr/router
@@ -776,6 +806,153 @@ fallback: {
 }
 ```
 
+## 🆚 Comparison with Alternatives
+
+| Feature | AI Task Router | LangChain | Direct OpenAI | Direct Anthropic |
+|---------|---------------|-----------|---------------|------------------|
+| Cost Optimization | ✅ Built-in | ❌ Manual | ❌ No | ❌ No |
+| Multi-Provider | ✅ Yes | ✅ Yes | ❌ Single | ❌ Single |
+| Automatic Fallback | ✅ Yes | ❌ Manual | ❌ No | ❌ No |
+| Cost Tracking | ✅ Built-in | ❌ No | ❌ No | ❌ No |
+| Bundle Size | 🟢 Small | 🔴 Large | 🟢 Small | 🟢 Small |
+| Learning Curve | 🟢 Easy | 🟡 Medium | 🟢 Easy | 🟢 Easy |
+| TypeScript | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Streaming | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| OpenAI Compatible | ✅ Yes | ❌ No | ✅ Yes | ❌ No |
+
+**Why not just use LangChain?**
+- LangChain is great for complex chains and agents, but it's heavy (100+ dependencies)
+- AI Task Router focuses on one thing: intelligent, cost-effective routing
+- If you need simple multi-provider support with automatic fallback, AI Task Router is lighter and faster
+
+**Why not just use OpenAI directly?**
+- You're locked into one provider (single point of failure)
+- No automatic cost optimization
+- No fallback handling for rate limits
+- No cost tracking across different models
+
+## 🏗️ How It Works
+
+```
+Your App → AI Task Router → [Intelligent Decision] → Best Provider
+                                      ↓
+                    ┌─────────────────┼─────────────────┐
+                    ↓                 ↓                 ↓
+              AI Badgr (cheap)   OpenAI GPT-4    Claude Sonnet
+                $0.003/1K          $0.03/1K        $0.015/1K
+                    ↓                 ↓                 ↓
+                [Response] ← [Automatic Fallback if Error]
+```
+
+### Routing Logic
+
+1. **Task Analysis**: Router examines the task type (chat, code, embeddings, etc.)
+2. **Provider Selection**: Based on your routes config, selects optimal provider
+3. **Cost Tracking**: Estimates cost based on token usage and provider pricing
+4. **Execution**: Sends request to selected provider
+5. **Fallback Handling**: If error, automatically tries next provider in chain
+6. **Response**: Returns unified response format regardless of provider
+
+## 🤝 Integrations & Use Cases
+
+### Developer Tools
+- ✅ **Continue** - Replace OpenAI endpoint in config
+- ✅ **Cursor** - Use as custom AI provider
+- ✅ **Cline** - Set as OpenAI-compatible endpoint
+- ✅ **Aider** - Use as model provider
+
+### Workflow Automation
+- ✅ **n8n** - HTTP Request node with OpenAI-compatible format
+- ✅ **Flowise** - Custom LLM provider
+- ✅ **Zapier** - API integration
+- ✅ **Make** - HTTP module integration
+
+### Frameworks
+- ✅ **LangChain** - Use as custom LLM
+- ✅ **Vercel AI SDK** - Compatible provider
+- ✅ **LlamaIndex** - Custom LLM integration
+- ✅ **AutoGPT** - OpenAI-compatible endpoint
+
+### Common Use Cases
+
+**1. Customer Support Chatbot**
+```javascript
+// Route simple questions to cheap provider, complex to premium
+const router = createRouter({
+  providers: { aibadgr: {...}, openai: {...} },
+  routes: {
+    chat: "aibadgr",      // 90% of questions
+    complex: "openai"      // 10% escalations
+  }
+});
+```
+
+**2. Code Review Assistant**
+```javascript
+// Use Claude for code, cheap provider for documentation
+const router = createRouter({
+  providers: { aibadgr: {...}, anthropic: {...} },
+  routes: {
+    code: "anthropic",           // Best for code
+    documentation: "aibadgr"     // Good enough for docs
+  }
+});
+```
+
+**3. Content Generation Pipeline**
+```javascript
+// Batch process with cost tracking
+const router = createRouter({
+  providers: { aibadgr: {...} },
+  hooks: {
+    onSuccess: (result) => {
+      analytics.track('content_generated', {
+        cost: result.cost,
+        tokens: result.usage.totalTokens
+      });
+    }
+  }
+});
+```
+
+## 📚 Additional Resources
+
+- 📖 [Full Documentation](https://github.com/michaelbrinkworth/ai-task-router/tree/main/docs)
+- 🎓 [Tutorials](https://github.com/michaelbrinkworth/ai-task-router/tree/main/docs/tutorials)
+- 💡 [Examples](https://github.com/michaelbrinkworth/ai-task-router/tree/main/examples)
+- 🔧 [API Reference](https://github.com/michaelbrinkworth/ai-task-router/blob/main/docs/spec.md)
+- 🚀 [Quick Start Guide](https://github.com/michaelbrinkworth/ai-task-router/blob/main/docs/quick-start.md)
+
+## 🌟 Community & Support
+
+- ⭐ **Star us on GitHub** - Help others discover this project
+- 🐛 **Report Issues** - [GitHub Issues](https://github.com/michaelbrinkworth/ai-task-router/issues)
+- 💬 **Discussions** - [GitHub Discussions](https://github.com/michaelbrinkworth/ai-task-router/discussions)
+- 📧 **Email** - support@aibadgr.com
+- 🐦 **Twitter** - [@aibadgr](https://twitter.com/aibadgr)
+- 💼 **LinkedIn** - [AI Badgr](https://linkedin.com/company/aibadgr)
+
+## 🎯 Roadmap
+
+- [ ] More provider integrations (Cohere, Hugging Face, Together AI)
+- [ ] Smart caching to reduce duplicate requests
+- [ ] Request queuing and rate limiting
+- [ ] Advanced cost analytics dashboard
+- [ ] Load balancing across multiple API keys
+- [ ] Prompt optimization suggestions
+- [ ] A/B testing for different providers
+- [ ] WebSocket support for real-time streaming
+
+## ⭐ Show Your Support
+
+If AI Task Router saves you money or makes your life easier, please consider:
+
+- ⭐ Starring the repo on GitHub
+- 🐛 Reporting bugs or requesting features
+- 📝 Writing about your experience
+- 💬 Sharing with your network
+- 🤝 Contributing code or documentation
+
 ## License
 
 MIT
@@ -783,6 +960,8 @@ MIT
 ## Contributing
 
 Contributions welcome! Please open an issue or PR.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Support
 
