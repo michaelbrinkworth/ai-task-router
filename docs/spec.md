@@ -7,6 +7,41 @@ This specification defines the behavior of the AI Task Router for implementation
 
 ---
 
+## Quick Reference
+
+### Task Types & Default Providers
+
+| Task | Description | Default Provider | Supports aibadgr | Supports openai | Supports anthropic |
+|------|-------------|------------------|------------------|-----------------|-------------------|
+| `summarize` | Text summarization | aibadgr | ✅ | ✅ | ✅ |
+| `rewrite` | Rewriting/paraphrasing | aibadgr | ✅ | ✅ | ✅ |
+| `classify` | Classification tasks | aibadgr | ✅ | ✅ | ✅ |
+| `extract` | Information extraction | aibadgr | ✅ | ✅ | ✅ |
+| `chat` | General conversation | aibadgr | ✅ | ✅ | ✅ |
+| `code` | Code generation/analysis | anthropic* | ✅ | ✅ | ✅ |
+| `reasoning` | Complex reasoning | openai* | ✅ | ✅ | ✅ |
+| `embeddings` | Vector embeddings | aibadgr | ✅ | ✅ | ❌ |
+
+\* Falls back to aibadgr if preferred provider not configured
+
+### Error Codes Reference
+
+**Trigger Fallback** (retriable errors):
+- `429` - Rate Limit Exceeded
+- `408` - Request Timeout
+- `504` - Gateway Timeout
+- `500-503, 505-599` - Server Errors
+- Network errors: `ECONNRESET`, `ETIMEDOUT`, `ENOTFOUND`, `ENETUNREACH`
+
+**No Fallback** (client errors - fix the request):
+- `400` - Bad Request (invalid parameters)
+- `401` - Unauthorized (invalid API key)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found (invalid endpoint)
+- `405-499` - Other client errors (except 408, 429)
+
+---
+
 ## 1. Core Concepts
 
 ### 1.1 Providers
@@ -498,13 +533,139 @@ A compliant implementation SHOULD:
 
 ---
 
-## 14. Version History
+## 14. Configuration Examples
+
+### Minimal Config (AI Badgr Only)
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: {
+      apiKey: process.env.AIBADGR_API_KEY
+    }
+  }
+});
+```
+
+**Use case**: Maximum cost savings, single provider, no fallback needed
+
+### Multi-Provider Config
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: {
+      apiKey: process.env.AIBADGR_API_KEY
+    },
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY
+    },
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY
+    }
+  },
+  routes: {
+    code: "anthropic",
+    reasoning: "openai"
+  },
+  fallback: {
+    chat: ["aibadgr", "openai"],
+    code: ["anthropic", "aibadgr"]
+  }
+});
+```
+
+**Use case**: Intelligent routing with task-specific providers and fallback chains
+
+### Production-Ready Config with Monitoring
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: {
+      apiKey: process.env.AIBADGR_API_KEY,
+      baseUrl: process.env.AIBADGR_BASE_URL // Optional custom endpoint
+    },
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY
+    },
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY
+    }
+  },
+  
+  mode: "balanced", // Balanced cost vs quality
+  defaultProvider: "aibadgr", // Fallback to cheapest
+  
+  timeoutMs: 120000, // 2 minute timeout for long requests
+  maxRetries: 2, // Retry each provider twice
+  
+  fallback: {
+    chat: ["aibadgr", "openai", "anthropic"],
+    code: ["anthropic", "openai", "aibadgr"],
+    reasoning: ["openai", "anthropic", "aibadgr"],
+    embeddings: ["aibadgr", "openai"] // Anthropic doesn't support embeddings
+  },
+  
+  fallbackPolicy: "enabled", // Enable automatic fallback
+  
+  // Production monitoring
+  onResult: (event) => {
+    logger.info("LLM Request Success", {
+      task: event.task,
+      provider: event.provider,
+      latencyMs: event.latencyMs,
+      costUsd: event.cost?.estimatedUsd,
+      inputTokens: event.usage?.inputTokens,
+      outputTokens: event.usage?.outputTokens,
+      attempts: event.attempts.length
+    });
+    
+    // Track metrics
+    metrics.increment("llm.requests.success");
+    metrics.gauge("llm.latency", event.latencyMs);
+    metrics.gauge("llm.cost", event.cost?.estimatedUsd || 0);
+  },
+  
+  onError: (event) => {
+    logger.error("LLM Request Failed", {
+      task: event.task,
+      provider: event.provider,
+      error: event.error,
+      status: event.status,
+      attempts: event.attempts
+    });
+    
+    // Track failures
+    metrics.increment("llm.requests.failure");
+    
+    // Alert on critical failures
+    if (event.attempts.length >= 3) {
+      alerting.send("All LLM providers failed", { event });
+    }
+  },
+  
+  // Custom pricing for contract rates
+  priceOverrides: {
+    "gpt-4o": {
+      inputPer1M: 4.0,  // Custom contract rate
+      outputPer1M: 12.0
+    }
+  }
+});
+```
+
+**Use case**: Production environment with monitoring, alerting, metrics, and custom pricing
+
+---
+
+## 15. Version History
 
 - **1.0** (December 2024): Initial specification
 
 ---
 
-## 15. Future Considerations (Not in MVP)
+## 16. Future Considerations (Not in MVP)
 
 These features are explicitly OUT OF SCOPE for the initial spec:
 

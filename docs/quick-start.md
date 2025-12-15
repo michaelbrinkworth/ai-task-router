@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get started with `@aibadgr/router` in 5 minutes.
+Get started with `@aibadgr/router` in 2 minutes.
 
 ## Installation
 
@@ -8,47 +8,79 @@ Get started with `@aibadgr/router` in 5 minutes.
 npm install @aibadgr/router
 ```
 
-## Minimal Setup
+## Your First Request
 
 ```javascript
 import { createRouter } from "@aibadgr/router";
 
 const router = createRouter({
   providers: {
-    aibadgr: {
-      apiKey: process.env.AIBADGR_API_KEY,
-    },
-  },
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
+  }
 });
 
-// Make a request
 const result = await router.run({
   task: "chat",
-  input: "Hello, world!",
+  input: "Hello, world!"
 });
 
 console.log(result.outputText);
+// Output: "Hello! How can I help you today?"
 ```
+
+**That's it!** You're now using an OpenAI-compatible LLM router that's 10x cheaper than OpenAI.
+
+## What Just Happened?
+
+- ✅ Router created with AI Badgr (OpenAI-compatible, much cheaper)
+- ✅ Request routed automatically
+- ✅ Fallback enabled (if provider has issues, it retries)
+- ✅ No configuration needed
+
+## Next Steps
+
+<details>
+<summary><b>Before You Go Further</b> (prerequisites)</summary>
+
+Make sure you have:
+- **Node.js 18+** installed (`node --version` to check)
+- **AI Badgr API key** from [aibadgr.com](https://aibadgr.com) (free tier available)
+
+</details>
 
 ## Common Use Cases
 
-### 1. Simple Chat
+### Different Task Types
 
 ```javascript
-const response = await router.chat({
-  input: "What is the capital of France?",
+// Summarization
+const summary = await router.run({
+  task: "summarize",
+  input: "Your long text here..."
 });
 
-console.log(response.outputText);
-// Output: "The capital of France is Paris."
+// Code generation
+const code = await router.run({
+  task: "code",
+  input: "Write a function to reverse a string"
+});
+
+// Classification
+const category = await router.run({
+  task: "classify",
+  input: "Is this email spam or not spam?"
+});
 ```
 
-### 2. Streaming Response
+**Available tasks**: `chat`, `summarize`, `rewrite`, `classify`, `extract`, `code`, `reasoning`, `embeddings`
+
+<details>
+<summary><b>Advanced: Streaming Responses</b></summary>
 
 ```javascript
 const stream = await router.chat({
   stream: true,
-  input: "Tell me a story",
+  input: "Tell me a story"
 });
 
 for await (const chunk of stream) {
@@ -56,173 +88,121 @@ for await (const chunk of stream) {
 }
 ```
 
-### 3. Task-Specific Routing
+</details>
+
+<details>
+<summary><b>Advanced: Multiple Providers with Routing</b></summary>
 
 ```javascript
 const router = createRouter({
   providers: {
     aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
   },
   routes: {
-    code: "anthropic", // Route code tasks to Claude
-  },
-});
-
-const codeResponse = await router.run({
-  task: "code",
-  input: "Write a function to sort an array",
+    code: "anthropic" // Use Claude for code tasks
+  }
 });
 ```
 
-### 4. Generate Embeddings
+</details>
+
+<details>
+<summary><b>Advanced: JSON Output & Embeddings</b></summary>
 
 ```javascript
-const embeddings = await router.embed({
-  task: "embeddings",
-  input: ["Hello", "World"],
-});
-
-console.log(embeddings.vectors); // [[0.1, 0.2, ...], [0.3, 0.4, ...]]
-```
-
-### 5. JSON Output
-
-```javascript
+// JSON output
 const response = await router.run({
   task: "extract",
-  input: "John Doe is 30 years old and lives in NYC",
-  json: true,
+  input: "John Doe is 30 years old",
+  json: true
 });
 
-const data = JSON.parse(response.outputText);
-// { name: "John Doe", age: 30, city: "NYC" }
+// Embeddings
+const embeddings = await router.embed({
+  task: "embeddings",
+  input: ["Hello", "World"]
+});
 ```
 
-### 6. Multiple Providers with Fallback
+</details>
+
+<details>
+<summary><b>Advanced: Fallback & Monitoring</b></summary>
 
 ```javascript
+// Automatic fallback
 const router = createRouter({
   providers: {
     aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    openai: { apiKey: process.env.OPENAI_API_KEY },
+    openai: { apiKey: process.env.OPENAI_API_KEY }
   },
   fallback: {
-    chat: ["aibadgr", "openai"], // Try aibadgr first, fallback to OpenAI
-  },
+    chat: ["aibadgr", "openai"] // Retry with OpenAI if aibadgr fails
+  }
 });
-```
 
-### 7. Monitor Performance
-
-```javascript
+// Monitor performance
 const router = createRouter({
   providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
   },
   onResult: (event) => {
-    console.log(`✓ ${event.task} completed in ${event.latencyMs}ms`);
-    console.log(`  Cost: $${event.cost?.estimatedUsd?.toFixed(4)}`);
-  },
-  onError: (event) => {
-    console.error(`✗ ${event.task} failed: ${event.error}`);
-  },
+    console.log(`✓ Cost: $${event.cost?.estimatedUsd}`);
+  }
 });
 ```
 
-### 8. Customize Timeouts
+</details>
 
-```javascript
-const router = createRouter({
-  providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-  },
-  timeoutMs: 30000, // 30 seconds
-  maxRetries: 2,    // Retry up to 2 times
-});
-```
+## Want More?
+
+**For detailed examples and advanced features**, see:
+- [Full API Documentation](../README.md#api-reference)
+- [Tutorial: Routing Basics](./tutorials/02-routing-basics.md)
+- [Examples Directory](../examples/)
+
+<details>
+<summary><b>Reference: All Configuration Options</b></summary>
 
 ## Routing Modes
 
-### Cheap Mode (Default)
-
-Everything goes to AI Badgr for maximum cost savings:
-
 ```javascript
-const router = createRouter({
-  providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-  },
-  mode: "cheap",
-});
+// Modes
+mode: "cheap"     // All → aibadgr (default)
+mode: "balanced"  // Smart routing (code → anthropic, reasoning → openai)
+mode: "best"      // Premium everywhere
+
+// Custom routes
+routes: {
+  code: "anthropic",
+  reasoning: "openai"
+}
+
+// Fallback chains
+fallback: {
+  chat: ["aibadgr", "openai"]
+}
+
+// Timeouts & retries
+timeoutMs: 30000
+maxRetries: 2
+
+// Event hooks
+onResult: (event) => { /* track success */ }
+onError: (event) => { /* handle errors */ }
 ```
 
-### Balanced Mode
+For complete configuration reference, see [Full README](../README.md#configuration).
 
-Use premium providers for specialized tasks:
+</details>
 
-```javascript
-const router = createRouter({
-  providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
-  },
-  mode: "balanced",
-});
-// code → anthropic
-// reasoning → openai
-// everything else → aibadgr
-```
+## Direct HTTP API (Optional)
 
-### Best Mode
+<details>
+<summary><b>Using AI Badgr without the router</b></summary>
 
-Use premium providers wherever available:
-
-```javascript
-const router = createRouter({
-  providers: {
-    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
-  },
-  mode: "best",
-});
-// chat, code → anthropic
-// reasoning → openai
-// embeddings → aibadgr
-```
-
-## Environment Variables
-
-Instead of passing keys directly, use environment variables:
-
-```bash
-# .env file
-AIBADGR_API_KEY=your-key-here
-OPENAI_API_KEY=your-key-here
-ANTHROPIC_API_KEY=your-key-here
-```
-
-Then in your code:
-
-```javascript
-const router = createRouter({
-  providers: {
-    aibadgr: {
-      apiKey: process.env.AIBADGR_API_KEY,
-    },
-    openai: {
-      apiKey: process.env.OPENAI_API_KEY,
-    },
-    anthropic: {
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    },
-  },
-});
-```
-
-## AI Badgr OpenAI-Compatible HTTP API (Optional)
+AI Badgr exposes an **OpenAI-compatible HTTP API**:
 
 If you want to call AI Badgr **directly over HTTP** (without the router), it exposes an **OpenAI-compatible API**.
 
@@ -332,13 +312,46 @@ const tasks = [
 ];
 ```
 
-## Next Steps
+## Common Patterns
 
-- Read the [full README](../README.md) for detailed API documentation
-- Check out [examples](../examples/) for more code samples
-- Read the [specification](./spec.md) for implementation details
+### Simple Chat Bot
 
-## Getting Help
+```javascript
+import { createRouter } from "@aibadgr/router";
 
-- Open an issue: [GitHub Issues](https://github.com/michaelbrinkworth/ai-task-router/issues)
-- Read the docs: [aibadgr.com/docs](https://aibadgr.com/docs)
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
+  }
+});
+
+async function chatBot(userMessage) {
+  const response = await router.chat({ input: userMessage });
+  return response.outputText;
+}
+
+// Usage
+const reply = await chatBot("What's the weather like?");
+console.log(reply);
+```
+
+### Code Generation with Fallback
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  routes: {
+    code: "anthropic" // Prefer Claude for code
+  },
+  fallback: {
+    code: ["anthropic", "aibadgr"] // Fallback to AI Badgr if Claude fails
+  }
+});
+```
+
+Full code examples available in [examples/](../examples/) directory.
+
+</details>
