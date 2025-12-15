@@ -18,7 +18,7 @@ import {
 import { AIBadgrProvider } from "./providers/aibadgr.js";
 import { OpenAIProvider } from "./providers/openai.js";
 import { AnthropicProvider } from "./providers/anthropic.js";
-import { shouldFallback, getErrorStatus, sleep } from "./utils.js";
+import { shouldFallback, getErrorStatus, sleep, validateTask, VALID_TASKS } from "./utils.js";
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_RETRIES = 1;
@@ -52,6 +52,13 @@ export class Router {
 
   constructor(config: RouterConfig) {
     this.originalConfig = config;
+    
+    // Validate API keys
+    if (!config.providers.aibadgr?.apiKey) {
+      throw new Error(
+        "AI Badgr API key is required. Add `aibadgr: { apiKey: process.env.AIBADGR_API_KEY }` to your providers config."
+      );
+    }
     
     // Initialize providers
     this.providers.set(
@@ -98,6 +105,51 @@ export class Router {
       onResult: config.onResult,
       onError: config.onError,
     };
+    
+    // Validate routing configuration (warnings, not errors)
+    this.validateRoutingConfig();
+  }
+
+  private validateRoutingConfig(): void {
+    const warnings: string[] = [];
+    
+    // Check if routes point to unconfigured providers
+    for (const [task, provider] of Object.entries(this.config.routes)) {
+      if (provider && !this.providers.has(provider)) {
+        warnings.push(
+          `Route '${task}' points to unconfigured provider '${provider}'. ` +
+          `Add \`${provider}: { apiKey: process.env.${provider.toUpperCase()}_API_KEY }\` to providers config, ` +
+          `or remove this route to use the default provider.`
+        );
+      }
+    }
+    
+    // Check if fallback chains include unconfigured providers
+    for (const [task, providers] of Object.entries(this.config.fallback)) {
+      if (providers) {
+        const unconfigured = providers.filter(p => !this.providers.has(p));
+        if (unconfigured.length > 0) {
+          warnings.push(
+            `Fallback for '${task}' includes unconfigured provider(s): ${unconfigured.join(", ")}. ` +
+            `They will be skipped in the fallback chain.`
+          );
+        }
+      }
+    }
+    
+    // Warn about embeddings routed to anthropic
+    if (this.config.routes.embeddings === "anthropic") {
+      warnings.push(
+        `Route 'embeddings' is set to 'anthropic', but Anthropic doesn't support embeddings. ` +
+        `It will fallback to aibadgr or openai.`
+      );
+    }
+    
+    // Print warnings
+    if (warnings.length > 0) {
+      console.warn("[@aibadgr/router] Configuration warnings:");
+      warnings.forEach(w => console.warn(`  - ${w}`));
+    }
   }
 
   private applyModeDefaults(
@@ -135,6 +187,72 @@ export class Router {
     }
     return routes;
   }
+  
+  /**
+   * Get current router configuration
+   * @returns Current configuration (useful for debugging)
+   */
+  public getConfig() {
+    return {
+      providers: Array.from(this.providers.keys()),
+      defaultProvider: this.config.defaultProvider,
+      routes: this.config.routes,
+      fallback: this.config.fallback,
+      mode: this.config.mode,
+      timeoutMs: this.config.timeoutMs,
+      maxRetries: this.config.maxRetries,
+      fallbackPolicy: this.config.fallbackPolicy,
+    };
+  }
+  
+  /**
+   * Validate configuration and return warnings/errors
+   * @returns Array of validation messages
+   */
+  public validateConfig(): { level: "error" | "warning"; message: string }[] {
+    const issues: { level: "error" | "warning"; message: string }[] = [];
+    
+    // Check for configured providers
+    if (this.providers.size === 0) {
+      issues.push({
+        level: "error",
+        message: "No providers configured. At least aibadgr provider is required."
+      });
+    }
+    
+    // Check routes
+    for (const [task, provider] of Object.entries(this.config.routes)) {
+      if (provider && !this.providers.has(provider)) {
+        issues.push({
+          level: "warning",
+          message: `Route '${task}' → '${provider}' (provider not configured)`
+        });
+      }
+    }
+    
+    // Check fallback chains
+    for (const [task, providers] of Object.entries(this.config.fallback)) {
+      if (providers) {
+        const unconfigured = providers.filter(p => !this.providers.has(p));
+        if (unconfigured.length > 0) {
+          issues.push({
+            level: "warning",
+            message: `Fallback '${task}' includes unconfigured: ${unconfigured.join(", ")}`
+          });
+        }
+        
+        // Check for anthropic in embeddings fallback
+        if (task === "embeddings" && providers.includes("anthropic")) {
+          issues.push({
+            level: "warning",
+            message: "Fallback 'embeddings' includes 'anthropic' (doesn't support embeddings)"
+          });
+        }
+      }
+    }
+    
+    return issues;
+  }
 
   private selectProvider(task: TaskName, requestProvider?: ProviderName): ProviderName {
     // 1. Explicit provider override
@@ -169,6 +287,12 @@ export class Router {
   }
 
   async run(request: RunRequest): Promise<ChatRunResponse | EmbeddingsResponse | ChatStream> {
+    // Validate task type
+    const task = "task" in request ? request.task : "chat";
+    if (task) {
+      validateTask(task);
+    }
+    
     if ("task" in request && request.task === "embeddings") {
       return this.embed(request as EmbeddingsRunRequest);
     }
@@ -181,6 +305,10 @@ export class Router {
     }
 
     const task = request.task || "chat";
+    
+    // Validate task
+    validateTask(task);
+    
     const primaryProvider = this.selectProvider(task, request.provider);
     const fallbackProviders = request.provider ? [] : this.getFallbackProviders(task, primaryProvider);
 
@@ -190,7 +318,12 @@ export class Router {
     // Try primary provider with retries
     const provider = this.providers.get(primaryProvider);
     if (!provider) {
-      throw new Error(`Provider ${primaryProvider} not configured`);
+      const configuredProviders = Array.from(this.providers.keys()).join(", ");
+      throw new Error(
+        `Provider '${primaryProvider}' not configured. ` +
+        `Available providers: ${configuredProviders}. ` +
+        `Add \`${primaryProvider}: { apiKey: process.env.${primaryProvider.toUpperCase()}_API_KEY }\` to your providers config.`
+      );
     }
 
     for (let retry = 0; retry <= this.config.maxRetries; retry++) {
@@ -270,16 +403,36 @@ export class Router {
       });
     }
 
-    throw new Error(`Chat request failed: ${lastError}`);
+    // Build detailed error message
+    const attemptSummary = attempts
+      .map(a => `  - ${a.provider}: ${a.error}${a.status ? ` (HTTP ${a.status})` : ""}`)
+      .join("\n");
+    
+    const error: any = new Error(
+      `Chat request failed for task '${task}' after ${attempts.length} attempt(s).\n` +
+      `Attempts:\n${attemptSummary}\n` +
+      `Tip: Check your API keys and network connection. Inspect the 'attempts' array on this error for details.`
+    );
+    error.attempts = attempts;
+    error.task = task;
+    throw error;
   }
 
   private async chatStream(request: ChatRunRequest): Promise<ChatStream> {
     const task = request.task || "chat";
+    
+    // Validate task
+    validateTask(task);
+    
     const primaryProvider = this.selectProvider(task, request.provider);
 
     const provider = this.providers.get(primaryProvider);
     if (!provider) {
-      throw new Error(`Provider ${primaryProvider} not configured`);
+      const configuredProviders = Array.from(this.providers.keys()).join(", ");
+      throw new Error(
+        `Provider '${primaryProvider}' not configured. ` +
+        `Available providers: ${configuredProviders}.`
+      );
     }
 
     // For streaming, we don't do fallback (too complex for MVP)
@@ -297,7 +450,20 @@ export class Router {
     // Try primary provider
     const provider = this.providers.get(primaryProvider);
     if (!provider) {
-      throw new Error(`Provider ${primaryProvider} not configured`);
+      const configuredProviders = Array.from(this.providers.keys()).join(", ");
+      throw new Error(
+        `Provider '${primaryProvider}' not configured. ` +
+        `Available providers: ${configuredProviders}. ` +
+        `Note: Anthropic doesn't support embeddings. Use aibadgr or openai.`
+      );
+    }
+    
+    // Warn if trying to use anthropic for embeddings
+    if (primaryProvider === "anthropic") {
+      console.warn(
+        "[@aibadgr/router] Warning: Anthropic doesn't support embeddings. " +
+        "Falling back to other providers."
+      );
     }
 
     for (let retry = 0; retry <= this.config.maxRetries; retry++) {
@@ -380,7 +546,19 @@ export class Router {
       });
     }
 
-    throw new Error(`Embeddings request failed: ${lastError}`);
+    // Build detailed error message
+    const attemptSummary = attempts
+      .map(a => `  - ${a.provider}: ${a.error}${a.status ? ` (HTTP ${a.status})` : ""}`)
+      .join("\n");
+    
+    const error: any = new Error(
+      `Embeddings request failed after ${attempts.length} attempt(s).\n` +
+      `Attempts:\n${attemptSummary}\n` +
+      `Tip: Only aibadgr and openai support embeddings (anthropic does not).`
+    );
+    error.attempts = attempts;
+    error.task = task;
+    throw error;
   }
 
   private async executeWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

@@ -2,7 +2,33 @@
  * Utility functions
  */
 
-import { ChatMessage, ChatRunRequest } from "./types.js";
+import { ChatMessage, ChatRunRequest, ChatRunResponse, EmbeddingsResponse, TaskName } from "./types.js";
+
+/**
+ * Valid task types for runtime validation
+ */
+export const VALID_TASKS: readonly TaskName[] = [
+  "summarize",
+  "rewrite",
+  "classify",
+  "extract",
+  "chat",
+  "code",
+  "reasoning",
+  "embeddings"
+] as const;
+
+/**
+ * Validate task type at runtime
+ * @throws Error if task is invalid
+ */
+export function validateTask(task: string): asserts task is TaskName {
+  if (!VALID_TASKS.includes(task as TaskName)) {
+    throw new Error(
+      `Invalid task '${task}'. Valid tasks are: ${VALID_TASKS.join(", ")}`
+    );
+  }
+}
 
 /**
  * Check if an error is retryable (network errors, timeouts, rate limits)
@@ -57,4 +83,32 @@ export function getErrorStatus(error: any): number | undefined {
  */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Type guard for chat responses
+ * 
+ * @example
+ * ```typescript
+ * if (isChatResponse(response)) {
+ *   console.log(response.outputText); // TypeScript knows this exists
+ * }
+ * ```
+ */
+export function isChatResponse(response: ChatRunResponse | EmbeddingsResponse): response is ChatRunResponse {
+  return "outputText" in response;
+}
+
+/**
+ * Type guard for embeddings responses
+ * 
+ * @example
+ * ```typescript
+ * if (isEmbeddingsResponse(response)) {
+ *   console.log(response.vectors); // TypeScript knows this exists
+ * }
+ * ```
+ */
+export function isEmbeddingsResponse(response: ChatRunResponse | EmbeddingsResponse): response is EmbeddingsResponse {
+  return "vectors" in response;
 }
