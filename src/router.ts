@@ -113,8 +113,10 @@ export class Router {
   private validateRoutingConfig(): void {
     const warnings: string[] = [];
     
-    // Check if routes point to unconfigured providers
-    for (const [task, provider] of Object.entries(this.config.routes)) {
+    // Check if user-provided routes point to unconfigured providers
+    // Only check originalConfig.routes to avoid warnings about mode-generated routes
+    const userRoutes = this.originalConfig.routes || {};
+    for (const [task, provider] of Object.entries(userRoutes)) {
       if (provider && !this.providers.has(provider)) {
         warnings.push(
           `Route '${task}' points to unconfigured provider '${provider}'. ` +
@@ -288,10 +290,8 @@ export class Router {
 
   async run(request: RunRequest): Promise<ChatRunResponse | EmbeddingsResponse | ChatStream> {
     // Validate task type
-    const task = "task" in request ? request.task : "chat";
-    if (task) {
-      validateTask(task);
-    }
+    const task = ("task" in request && request.task) ? request.task : "chat";
+    validateTask(task);
     
     if ("task" in request && request.task === "embeddings") {
       return this.embed(request as EmbeddingsRunRequest);
@@ -458,12 +458,18 @@ export class Router {
       );
     }
     
-    // Warn if trying to use anthropic for embeddings
-    if (primaryProvider === "anthropic") {
-      console.warn(
-        "[@aibadgr/router] Warning: Anthropic doesn't support embeddings. " +
-        "Falling back to other providers."
-      );
+    // Skip anthropic for embeddings (validation already done at config time)
+    if (primaryProvider === "anthropic" && fallbackProviders.length > 0) {
+      // Skip to fallback immediately without warning (already warned at config time)
+      const fallbackAdapter = this.providers.get(fallbackProviders[0]);
+      if (fallbackAdapter) {
+        const response = await this.executeWithTimeout(
+          fallbackAdapter.embeddings(request),
+          this.config.timeoutMs
+        );
+        response.attempts = [{ provider: primaryProvider, ok: false, error: "Anthropic doesn't support embeddings" }];
+        return response;
+      }
     }
 
     for (let retry = 0; retry <= this.config.maxRetries; retry++) {

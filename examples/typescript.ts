@@ -297,8 +297,25 @@ async function example6(): Promise<void> {
     constructor(private router: Router) {}
 
     async process(request: LLMRequest): Promise<LLMResponse> {
+      // Handle embeddings separately
+      if (request.task === "embeddings") {
+        const embedResponse = await this.router.embed({
+          task: "embeddings",
+          input: request.prompt
+        });
+        return {
+          text: JSON.stringify(embedResponse.vectors),
+          provider: embedResponse.provider,
+          metadata: {
+            tokens: embedResponse.usage?.totalTokens || 0,
+            cost: embedResponse.cost?.estimatedUsd || 0,
+            latency: embedResponse.latencyMs
+          }
+        };
+      }
+
       const routerRequest: ChatRunRequest = {
-        task: request.task === "embeddings" ? "chat" : request.task,
+        task: request.task,
         input: request.prompt,
         maxTokens: request.options?.maxTokens,
         temperature: request.options?.temperature
