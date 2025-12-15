@@ -174,7 +174,7 @@ Message = {
 {
   task: "embeddings"                // Required
   input: string | string[]          // Text(s) to embed
-  model?: string                    // Model name (default: "text-embedding-3-small")
+  model?: string                    // Model name (default: "ai-badgr-embedding" for AI Badgr)
   provider?: "aibadgr" | "openai"   // Override (anthropic not supported)
 }
 ```
@@ -264,6 +264,9 @@ Final summary can be emitted via `onResult` hook but not returned from stream.
 - **Endpoints**:
   - `/chat/completions` (streaming supported)
   - `/embeddings`
+- **Embeddings model**:
+  - Responses use `model: "ai-badgr-embedding"` (1536-dimensional vector)
+  - Request `model` field accepts OpenAI-style IDs for compatibility.
 - **Special handling**: None (follows OpenAI spec)
 
 ### 7.2 OpenAI

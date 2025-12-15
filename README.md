@@ -125,7 +125,7 @@ for await (const chunk of stream) {
 const embeddings = await router.embed({
   task: "embeddings",
   input: ["Hello world", "Goodbye world"],
-  model: "text-embedding-3-small",
+  model: "ai-badgr-embedding",
 });
 
 console.log(embeddings.vectors); // [[0.1, 0.2, ...], [0.3, 0.4, ...]]

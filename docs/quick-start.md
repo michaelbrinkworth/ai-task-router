@@ -222,6 +222,101 @@ const router = createRouter({
 });
 ```
 
+## AI Badgr OpenAI-Compatible HTTP API (Optional)
+
+If you want to call AI Badgr **directly over HTTP** (without the router), it exposes an **OpenAI-compatible API**.
+
+- **Base URL (production)**: `https://aibadgr.com/api/v1`
+- **Auth headers** (either works):
+  - `Authorization: Bearer YOUR_API_KEY`
+  - `x-api-key: YOUR_API_KEY`
+
+### Chat Completions
+
+- **Endpoint**: `POST /chat/completions`
+- **Purpose**: Drop-in replacement for `https://api.openai.com/v1/chat/completions`
+
+**Example: cURL**
+
+```bash
+curl https://aibadgr.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Explain AI Badgr in one sentence."}
+    ],
+    "max_tokens": 128,
+    "temperature": 0.7
+  }'
+```
+
+**Example: Python (OpenAI SDK)**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://aibadgr.com/api/v1",
+    api_key="YOUR_API_KEY",
+)
+
+resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Explain AI Badgr in one sentence."},
+    ],
+    max_tokens=128,
+    temperature=0.7,
+)
+
+print(resp.choices[0].message.content)
+```
+
+**Example: Node / JS (fetch)**
+
+```javascript
+const resp = await fetch("https://aibadgr.com/api/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.AIBADGR_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
+      { role: "user", content: "Explain AI Badgr in one sentence." },
+    ],
+    max_tokens: 128,
+    temperature: 0.7,
+  }),
+});
+
+const data = await resp.json();
+console.log(data.choices[0].message.content);
+```
+
+### Embeddings
+
+- **Endpoint**: `POST /embeddings`
+- **Purpose**: Drop-in replacement for `https://api.openai.com/v1/embeddings`
+
+```bash
+curl https://aibadgr.com/api/v1/embeddings \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type": "application/json" \
+  -d '{
+    "model": "ai-badgr-embedding",
+    "input": "The quick brown fox jumps over the lazy dog."
+  }'
+```
+
+The response shape matches OpenAI’s embeddings API (`object: "list"`, `data[0].embedding`, `usage`, etc.), so any OpenAI-compatible client or vector DB integration should work with just a **base URL swap**.
+
 ## All Task Types
 
 ```javascript

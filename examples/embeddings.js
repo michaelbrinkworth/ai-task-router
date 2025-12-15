@@ -20,7 +20,7 @@ const result = await router.embed({
     "Machine learning is a subset of artificial intelligence",
     "TypeScript is a superset of JavaScript",
   ],
-  model: "text-embedding-3-small",
+  model: "ai-badgr-embedding",
 });
 
 console.log("Provider:", result.provider);
