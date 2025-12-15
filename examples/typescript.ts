@@ -139,8 +139,8 @@ async function example3(): Promise<void> {
         input: texts
       };
 
-      const response = await this.router.embed(request);
-      return response.vectors;
+      const embeddingResponse = await this.router.embed(request);
+      return embeddingResponse.vectors;
     }
   }
 
@@ -153,8 +153,8 @@ async function example3(): Promise<void> {
     const codeResult = await handler.handleCode("Write hello world");
     console.log("Code generated:", codeResult.language);
 
-    const embeddings = await handler.handleEmbeddings(["test1", "test2"]);
-    console.log("Embeddings:", embeddings.length, "vectors");
+    const embeddingVectors = await handler.handleEmbeddings(["test1", "test2"]);
+    console.log("Embeddings:", embeddingVectors.length, "vectors");
   } catch (error) {
     console.error("Handler error:", (error as Error).message);
   }

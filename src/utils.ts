@@ -90,8 +90,11 @@ export function sleep(ms: number): Promise<void> {
  * 
  * @example
  * ```typescript
+ * const response: ChatRunResponse | EmbeddingsResponse = await router.run(...);
  * if (isChatResponse(response)) {
  *   console.log(response.outputText); // TypeScript knows this exists
+ * } else {
+ *   console.log(response.vectors); // TypeScript knows response is EmbeddingsResponse
  * }
  * ```
  */
