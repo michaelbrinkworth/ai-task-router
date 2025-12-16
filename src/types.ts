@@ -1,5 +1,5 @@
 /**
- * Core types for @aibadgr/router
+ * Core types for @aibadgr/ai-task-router
  */
 
 /**

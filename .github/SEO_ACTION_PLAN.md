@@ -135,7 +135,7 @@ Use the templates in `.github/SOCIAL_MEDIA.md`
 ## 📈 Measure Success
 
 ### Weekly Metrics
-- NPM downloads: https://www.npmjs.com/package/@aibadgr/router
+- NPM downloads: https://www.npmjs.com/package/@aibadgr/ai-task-router
 - GitHub stars: Check repository page
 - Issues/PRs: Monitor engagement
 - Social media: Track likes/shares/comments
@@ -147,7 +147,7 @@ Use the templates in `.github/SOCIAL_MEDIA.md`
 - Month 6: 10,000 npm downloads, 500 GitHub stars
 
 ### Track These URLs
-1. https://www.npmjs.com/package/@aibadgr/router
+1. https://www.npmjs.com/package/@aibadgr/ai-task-router
 2. https://github.com/michaelbrinkworth/ai-task-router
 3. Google Search: "ai task router"
 4. Google Search: "llm router nodejs"
@@ -180,11 +180,11 @@ Use the templates in `.github/SOCIAL_MEDIA.md`
 
 ## 🔗 Quick Links
 
-- Package: https://www.npmjs.com/package/@aibadgr/router
+- Package: https://www.npmjs.com/package/@aibadgr/ai-task-router
 - Repo: https://github.com/michaelbrinkworth/ai-task-router
 - Issues: https://github.com/michaelbrinkworth/ai-task-router/issues
 - Discussions: https://github.com/michaelbrinkworth/ai-task-router/discussions (enable first)
-- NPM Stats: https://npm-stat.com/charts.html?package=@aibadgr/router
+- NPM Stats: https://npm-stat.com/charts.html?package=@aibadgr/ai-task-router
 
 ## 📝 Content Calendar Template
 

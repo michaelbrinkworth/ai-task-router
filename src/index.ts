@@ -1,9 +1,9 @@
 /**
- * @aibadgr/router - A tiny, task-based LLM router
- * 
+ * @aibadgr/ai-task-router - A tiny, task-based LLM router
+ *
  * @example
  * ```typescript
- * import { createRouter } from "@aibadgr/router";
+ * import { createRouter } from "@aibadgr/ai-task-router";
  * 
  * const router = createRouter({
  *   providers: {

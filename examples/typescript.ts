@@ -22,7 +22,7 @@ import {
   isEmbeddingsResponse,
   validateTask,
   VALID_TASKS
-} from "@aibadgr/router";
+} from "@aibadgr/ai-task-router";
 
 // Example 1: Basic typed router
 async function example1(): Promise<void> {

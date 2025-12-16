@@ -14,7 +14,7 @@
 
 Perfect for chatbots, agents & workflows 🤖
 
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 
 https://github.com/michaelbrinkworth/ai-task-router
 
@@ -63,7 +63,7 @@ Just change the endpoint 🎯
 
 5/5 🚀 Get started in 30 seconds
 
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 
 One API key, zero config required.
 Add more providers when you need them.
@@ -101,7 +101,7 @@ Save 80% on AI costs by routing through AI Task Router:
 
 Drop-in OpenAI replacement.
 
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 
 #DevTools #AI #Coding
 ```
@@ -144,7 +144,7 @@ Key Features:
 🔒 Type-safe TypeScript
 
 Open source (MIT licensed) and available on NPM:
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 
 GitHub: https://github.com/michaelbrinkworth/ai-task-router
 
@@ -183,7 +183,7 @@ A chatbot with 1M requests/month: $270 instead of $3,000 ($32,760/year savings)
 
 **Installation:**
 ```bash
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 ```
 
 **GitHub:** https://github.com/michaelbrinkworth/ai-task-router
@@ -215,7 +215,7 @@ Built a Node.js library for intelligent routing across multiple AI providers (Op
 
 **Quick Start:**
 ```javascript
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 const router = createRouter({
   providers: {
@@ -253,7 +253,7 @@ Routes tasks by complexity:
 **Example savings:**
 1M chatbot messages/month: $270 vs $3,000 (90% savings)
 
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 
 GitHub: https://github.com/michaelbrinkworth/ai-task-router
 ```
@@ -288,7 +288,7 @@ Real-world impact: A chatbot with 1M messages/month saves $27,000/month vs routi
 It's MIT licensed, well-tested, and production-ready. Would love feedback from the community!
 
 GitHub: https://github.com/michaelbrinkworth/ai-task-router
-NPM: npm install @aibadgr/router
+NPM: npm install @aibadgr/ai-task-router
 ```
 
 ## Product Hunt Description

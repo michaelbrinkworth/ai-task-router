@@ -1,9 +1,9 @@
-# @aibadgr/router
+# @aibadgr/ai-task-router
 
-[![npm version](https://img.shields.io/npm/v/@aibadgr/router.svg)](https://www.npmjs.com/package/@aibadgr/router)
-[![npm downloads](https://img.shields.io/npm/dm/@aibadgr/router.svg)](https://www.npmjs.com/package/@aibadgr/router)
+[![npm version](https://img.shields.io/npm/v/@aibadgr/ai-task-router.svg)](https://www.npmjs.com/package/@aibadgr/ai-task-router)
+[![npm downloads](https://img.shields.io/npm/dm/@aibadgr/ai-task-router.svg)](https://www.npmjs.com/package/@aibadgr/ai-task-router)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node Version](https://img.shields.io/node/v/@aibadgr/router.svg)](https://nodejs.org)
+[![Node Version](https://img.shields.io/node/v/@aibadgr/ai-task-router.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![GitHub Stars](https://img.shields.io/github/stars/michaelbrinkworth/ai-task-router.svg)](https://github.com/michaelbrinkworth/ai-task-router)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/michaelbrinkworth/ai-task-router/pulls)
@@ -55,11 +55,11 @@ Most AI applications waste money by routing everything to expensive providers li
 
 
 ```bash
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 ```
 
 ```javascript
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 const router = createRouter({
   providers: {
@@ -111,7 +111,7 @@ const router = createRouter({
 ## Installation
 
 ```bash
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 ```
 
 ## More Examples
@@ -426,7 +426,7 @@ const result = await router.run({
 Full TypeScript support included:
 
 ```typescript
-import { createRouter, ChatRunRequest, EmbeddingsRunRequest } from "@aibadgr/router";
+import { createRouter, ChatRunRequest, EmbeddingsRunRequest } from "@aibadgr/ai-task-router";
 ```
 
 **Note**: For streaming support, your `tsconfig.json` needs ES2018+ lib:
@@ -619,7 +619,7 @@ console.log(completion.choices[0].message.content);
 
 **After** (with router for cost savings + fallback):
 ```javascript
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 const router = createRouter({
   providers: {
@@ -658,7 +658,7 @@ console.log(message.content[0].text);
 
 **After** (with router):
 ```javascript
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 const router = createRouter({
   providers: {

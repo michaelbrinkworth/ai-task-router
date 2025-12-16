@@ -39,11 +39,11 @@ Monitor exactly how much each request costs across all providers. Perfect for bu
 ### Quick Start
 
 ```bash
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 ```
 
 ```javascript
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 const router = createRouter({
   providers: {
@@ -138,7 +138,7 @@ ai, llm, router, openai, anthropic, claude, gpt-4, gpt-3.5, chatgpt, cost-optimi
 
 **Save 80%+ on AI costs. Install now:**
 ```bash
-npm install @aibadgr/router
+npm install @aibadgr/ai-task-router
 ```
 
 **GitHub**: https://github.com/michaelbrinkworth/ai-task-router

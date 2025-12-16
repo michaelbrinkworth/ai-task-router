@@ -2,7 +2,7 @@
  * OpenAI-compatible proxy server for Continue (or any OpenAI-compatible tool)
  * 
  * This creates an HTTP server that accepts OpenAI API requests and routes them
- * through @aibadgr/router with intelligent provider selection and fallback.
+ * through @aibadgr/ai-task-router with intelligent provider selection and fallback.
  * 
  * Usage:
  *   1. Set AIBADGR_API_KEY in your environment
@@ -10,7 +10,7 @@
  *   3. Point Continue (or other tools) to http://localhost:3000/v1
  */
 
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 import http from "http";
 
 const PORT = process.env.PORT || 3000;
@@ -75,7 +75,7 @@ const server = http.createServer(async (req, res) => {
 
       console.log(`[${new Date().toISOString()}] ${task} request: ${input.slice(0, 50)}...`);
 
-      // Route through @aibadgr/router
+      // Route through @aibadgr/ai-task-router
       const result = await router.run({
         task,
         messages,

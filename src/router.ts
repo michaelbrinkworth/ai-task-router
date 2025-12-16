@@ -149,7 +149,7 @@ export class Router {
     
     // Print warnings
     if (warnings.length > 0) {
-      console.warn("[@aibadgr/router] Configuration warnings:");
+      console.warn("[@aibadgr/ai-task-router] Configuration warnings:");
       warnings.forEach(w => console.warn(`  - ${w}`));
     }
   }

@@ -4,7 +4,7 @@
  * Demonstrates how to track costs, set budgets, and analyze spending
  */
 
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 // Cost Tracker Class
 class CostTracker {

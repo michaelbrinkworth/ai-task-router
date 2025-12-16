@@ -4,7 +4,7 @@
  * Demonstrates how to handle different error types and inspect attempts
  */
 
-import { createRouter } from "@aibadgr/router";
+import { createRouter } from "@aibadgr/ai-task-router";
 
 // Example 1: Handling all providers failed
 async function example1() {

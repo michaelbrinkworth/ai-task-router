@@ -76,7 +76,7 @@
    
    Perfect for chatbots, agents & workflows
    
-   npm install @aibadgr/router
+   npm install @aibadgr/ai-task-router
    
    #AI #LLM #OpenAI #ChatGPT #NodeJS
    ```

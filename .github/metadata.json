@@ -1,5 +1,5 @@
 {
-  "name": "@aibadgr/router",
+  "name": "@aibadgr/ai-task-router",
   "displayName": "AI Task Router",
   "tagline": "Intelligent LLM routing for cost optimization and automatic failover",
   "description": "Cost-optimized AI routing library for OpenAI, Anthropic Claude, and AI Badgr. Automatically route tasks to the most cost-effective provider while maintaining quality. Features automatic fallback, streaming support, and built-in cost tracking.",
