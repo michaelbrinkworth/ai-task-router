@@ -14,6 +14,9 @@ import {
   TaskName,
   ProviderAdapter,
   Attempt,
+  RouterMode,
+  ClassificationConfig,
+  EscalationConfig,
 } from "./types.js";
 import { AIBadgrProvider } from "./providers/aibadgr.js";
 import { OpenAIProvider } from "./providers/openai.js";
@@ -42,10 +45,14 @@ export class Router {
     defaultProvider: ProviderName;
     routes: Partial<Record<TaskName, ProviderName>>;
     fallback: Partial<Record<TaskName, ProviderName[]>>;
-    mode: "cheap" | "balanced" | "best";
+    mode: RouterMode;
     timeoutMs: number;
     maxRetries: number;
     fallbackPolicy: "enabled" | "none";
+    policies?: Partial<Record<TaskName, ProviderName>>;
+    forceProvider?: ProviderName;
+    classification: ClassificationConfig;
+    escalation: EscalationConfig;
     onResult?: (event: any) => void;
     onError?: (event: any) => void;
   };
@@ -94,6 +101,8 @@ export class Router {
       routes = this.applyModeDefaults(config.mode, routes);
     }
 
+    const isIntelligentMode = config.mode === "intelligent";
+
     this.config = {
       defaultProvider: config.defaultProvider || "aibadgr",
       routes,
@@ -102,6 +111,17 @@ export class Router {
       timeoutMs: config.timeoutMs || DEFAULT_TIMEOUT_MS,
       maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
       fallbackPolicy: config.fallbackPolicy || "enabled",
+      policies: config.policies,
+      forceProvider: config.forceProvider,
+      classification: {
+        enabled: config.classification?.enabled ?? isIntelligentMode,
+        model: config.classification?.model,
+      },
+      escalation: {
+        enabled: config.escalation?.enabled ?? isIntelligentMode,
+        minLength: config.escalation?.minLength ?? 100,
+        checkUncertainty: config.escalation?.checkUncertainty ?? false,
+      },
       onResult: config.onResult,
       onError: config.onError,
     };
@@ -155,7 +175,7 @@ export class Router {
   }
 
   private applyModeDefaults(
-    mode: "cheap" | "balanced" | "best",
+    mode: RouterMode,
     routes: Partial<Record<TaskName, ProviderName>>
   ): Partial<Record<TaskName, ProviderName>> {
     if (mode === "cheap") {
@@ -186,6 +206,10 @@ export class Router {
         reasoning: this.providers.has("openai") ? "openai" : "aibadgr",
         chat: this.providers.has("anthropic") ? "anthropic" : "aibadgr",
       };
+    } else if (mode === "intelligent") {
+      // Intelligent mode: classification will override routes
+      // Keep default routes as fallback
+      return routes;
     }
     return routes;
   }

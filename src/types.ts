@@ -42,6 +42,7 @@ export type TaskName =
  * - `cheap`: All tasks route to aibadgr (maximum cost savings)
  * - `balanced`: Code→anthropic, reasoning→openai, rest→aibadgr
  * - `best`: Premium providers for most tasks
+ * - `intelligent`: AI-powered classification with policy control (new)
  * 
  * @example
  * ```typescript
@@ -49,9 +50,15 @@ export type TaskName =
  *   providers: { ... },
  *   mode: "balanced" // Use premium providers selectively
  * });
+ * 
+ * // Opt into intelligent mode
+ * const intelligentRouter = createRouter({
+ *   providers: { ... },
+ *   mode: "intelligent" // Enable AI classification
+ * });
  * ```
  */
-export type RouterMode = "cheap" | "balanced" | "best";
+export type RouterMode = "cheap" | "balanced" | "best" | "intelligent";
 
 /**
  * Fallback behavior policy
@@ -68,6 +75,74 @@ export type RouterMode = "cheap" | "balanced" | "best";
  * ```
  */
 export type FallbackPolicy = "enabled" | "none";
+
+/**
+ * Classification result from AI classifier
+ * 
+ * Used in intelligent mode to analyze requests and determine optimal routing.
+ */
+export interface ClassificationResult {
+  /** Detected task intent (one of 8 task types) */
+  intent: TaskName;
+  /** Complexity level of the request */
+  complexity: "low" | "medium" | "high";
+  /** Safety/quality risk level */
+  risk: "none" | "elevated";
+  /** Expected response length */
+  expectedLength: "short" | "long";
+  /** Confidence score (0-1) in the classification */
+  confidence: number;
+  /** Human-readable explanation of the classification */
+  reasoning: string;
+}
+
+/**
+ * Classification configuration
+ */
+export interface ClassificationConfig {
+  /** Enable/disable classification (default: true in intelligent mode) */
+  enabled?: boolean;
+  /** Optional: Override classification model */
+  model?: string;
+}
+
+/**
+ * Escalation configuration
+ */
+export interface EscalationConfig {
+  /** Enable/disable escalation (default: true in intelligent mode) */
+  enabled?: boolean;
+  /** Minimum token length for "long" responses (default: 100) */
+  minLength?: number;
+  /** Check for uncertainty patterns (default: false) */
+  checkUncertainty?: boolean;
+}
+
+/**
+ * Routing decision metadata for transparency
+ * 
+ * Included in all responses to explain routing decisions.
+ */
+export interface RoutingMetadata {
+  /** Classification result (if intelligent mode used) */
+  classifier?: ClassificationResult;
+  /** Tokens used for classification */
+  classifierTokens?: number;
+  /** Cost of classification in USD */
+  classifierCost?: number;
+  /** Policy rule that was applied */
+  policyApplied?: string;
+  /** Final provider selected */
+  selectedProvider: ProviderName;
+  /** Human-readable explanation of routing decision */
+  reason: string;
+  /** Whether response was escalated */
+  escalated?: boolean;
+  /** Reason for escalation (if applicable) */
+  escalationReason?: string;
+  /** Routing mode used */
+  mode: RouterMode;
+}
 
 /**
  * Provider configuration
@@ -157,8 +232,61 @@ export interface RouterConfig {
    * - cheap: All to aibadgr
    * - balanced: Premium for code/reasoning, aibadgr for rest
    * - best: Premium providers where available
+   * - intelligent: AI-powered classification (new)
    */
   mode?: RouterMode;
+
+  /**
+   * Policy overrides for task routing (used in intelligent mode)
+   * 
+   * Policies always override classifier decisions.
+   * 
+   * @example
+   * ```typescript
+   * policies: {
+   *   code: "anthropic", // Always route code to Claude
+   *   reasoning: "openai" // Always route reasoning to OpenAI
+   * }
+   * ```
+   */
+  policies?: Partial<Record<TaskName, ProviderName>>;
+
+  /**
+   * Force all requests to specific provider (bypasses everything)
+   * 
+   * @example
+   * ```typescript
+   * forceProvider: "anthropic" // Route everything to Claude
+   * ```
+   */
+  forceProvider?: ProviderName;
+
+  /**
+   * Classification configuration (for intelligent mode)
+   * 
+   * @example
+   * ```typescript
+   * classification: {
+   *   enabled: true,
+   *   model: "gpt-4o-mini" // Optional: override default
+   * }
+   * ```
+   */
+  classification?: ClassificationConfig;
+
+  /**
+   * Escalation configuration (for intelligent mode)
+   * 
+   * @example
+   * ```typescript
+   * escalation: {
+   *   enabled: true,
+   *   minLength: 100,
+   *   checkUncertainty: false
+   * }
+   * ```
+   */
+  escalation?: EscalationConfig;
 
   /**
    * Request timeout in milliseconds
@@ -394,6 +522,8 @@ export interface ChatRunResponse {
   latencyMs: number;
   /** History of all provider attempts (for debugging fallback) */
   attempts: Attempt[];
+  /** Routing decision metadata (for transparency) */
+  routing?: RoutingMetadata;
 }
 
 /**
@@ -455,6 +585,8 @@ export interface EmbeddingsResponse {
   latencyMs: number;
   /** History of all provider attempts */
   attempts: Attempt[];
+  /** Routing decision metadata (for transparency) */
+  routing?: RoutingMetadata;
 }
 
 /**
@@ -473,6 +605,8 @@ export interface ResultEvent {
   cost?: CostInfo;
   /** Attempt history */
   attempts: Attempt[];
+  /** Routing decision metadata (for transparency) */
+  routing?: RoutingMetadata;
 }
 
 /**
