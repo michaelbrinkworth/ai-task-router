@@ -99,12 +99,16 @@ const router = createRouter({
 
 ## Features
 
+- 🧠 **AI-Powered Classification** - NEW: Intelligent mode automatically detects task types
 - 🎯 **Task-based routing** - Route requests by task type (summarize, code, reasoning, etc.)
+- 🚀 **Automatic Escalation** - NEW: Re-routes to better providers if quality thresholds aren't met
+- 🛡️ **Policy Control** - NEW: Override AI decisions with explicit policies
 - 💰 **Cost optimization** - Default to AI Badgr for cost savings, premium providers for specialized tasks
 - 🔄 **Automatic fallback** - Handles rate limits, timeouts, and errors gracefully
 - 📡 **Streaming support** - Real-time responses for chat completions
-- 📊 **Cost estimation** - Built-in pricing for all providers
+- 📊 **Cost estimation** - Built-in pricing for all providers with classification cost tracking
 - 🪝 **Event hooks** - Monitor success, failures, and performance
+- 🔍 **Full Transparency** - NEW: Every decision is explainable with routing metadata
 - 🚀 **Zero config** - Works with just an AI Badgr API key
 - 📦 **Tiny** - Minimal dependencies, tree-shakeable ESM
 
@@ -141,6 +145,222 @@ const embeddings = await router.embed({
 console.log(embeddings.vectors); // [[0.1, 0.2, ...], [0.3, 0.4, ...]]
 ```
 
+## 🧠 Intelligent Mode (AI-Powered Routing)
+
+**NEW:** The router now supports AI-powered classification to automatically detect task types and route requests optimally. This eliminates the need to manually specify task types while maintaining full control via policies.
+
+### What is Intelligent Mode?
+
+Intelligent mode uses AI classification to analyze each request and determine:
+- **Task intent** (summarize, code, chat, etc.)
+- **Complexity** (low, medium, high)
+- **Risk level** (safety/quality concerns)
+- **Expected length** (short, long)
+- **Confidence** (how sure the classifier is)
+
+The router then uses this information to make smart routing decisions and automatically escalate if quality thresholds aren't met.
+
+### Quick Start with Intelligent Mode
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    openai: { apiKey: process.env.OPENAI_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  mode: "intelligent" // Enable AI classification
+});
+
+// No need to specify task type - AI figures it out!
+const result = await router.run({
+  input: "Write a function to calculate fibonacci numbers"
+});
+
+// View routing decision
+console.log(result.routing);
+// {
+//   classifier: { intent: "code", complexity: "medium", confidence: 0.95, ... },
+//   classifierTokens: 150,
+//   classifierCost: 0.0001,
+//   selectedProvider: "anthropic",
+//   reason: "AI classification: code (confidence: 0.95, complexity: medium)",
+//   mode: "intelligent"
+// }
+```
+
+### Policy Control
+
+Policies always override AI classification, giving you full control:
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  mode: "intelligent",
+  policies: {
+    code: "anthropic",      // Always use Claude for code
+    reasoning: "openai"     // Always use OpenAI for reasoning
+    // Other tasks use AI classification
+  }
+});
+```
+
+### Precedence Order
+
+In intelligent mode, the router uses this priority order:
+
+1. `request.provider` - Explicit per-request override (highest)
+2. `forceProvider` - Force all requests to one provider
+3. `policies[task]` - Policy rules for specific tasks
+4. **AI Classifier** - AI-powered task detection ⭐ NEW
+5. `routes[task]` - Legacy static routes (fallback)
+6. `defaultProvider` - Default fallback (lowest)
+
+**Key insight:** In intelligent mode, the classifier **beats legacy routes**. In static modes (`cheap`, `balanced`, `best`), routes are used directly.
+
+### Automatic Escalation
+
+The router automatically detects quality issues and re-routes to a better provider:
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  mode: "intelligent",
+  escalation: {
+    enabled: true,
+    minLength: 100,          // Escalate if response < 100 tokens for "long" responses
+    checkUncertainty: false  // Check for "I can't" patterns
+  }
+});
+
+const result = await router.run({
+  input: "Write a detailed explanation of quantum computing",
+  json: true  // Request JSON output
+});
+
+// If JSON validation fails, automatically escalates to better provider
+if (result.routing?.escalated) {
+  console.log(`Escalated: ${result.routing.escalationReason}`);
+  // "JSON validation failed (requested json: true but output is not valid JSON)"
+}
+```
+
+### Classification Configuration
+
+Control classification behavior:
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
+  },
+  mode: "intelligent",
+  classification: {
+    enabled: true,              // Enable/disable (default: true in intelligent mode)
+    model: "gpt-4o-mini"       // Override classification model (default: gpt-4o-mini)
+  }
+});
+```
+
+### Transparency & Cost Tracking
+
+Every response includes full routing metadata:
+
+```javascript
+const result = await router.run({
+  input: "Summarize this article..."
+});
+
+console.log(result.routing);
+// {
+//   classifier: {
+//     intent: "summarize",
+//     complexity: "low",
+//     risk: "none",
+//     expectedLength: "short",
+//     confidence: 0.92,
+//     reasoning: "User requested summarization of content"
+//   },
+//   classifierTokens: 145,
+//   classifierCost: 0.00008,
+//   policyApplied: "classifier",
+//   selectedProvider: "aibadgr",
+//   reason: "AI classification: summarize (confidence: 0.92, complexity: low)",
+//   escalated: false,
+//   mode: "intelligent"
+// }
+
+// Total cost includes classification
+console.log(`Classification: $${result.routing.classifierCost}`);
+console.log(`Request: $${result.cost.estimatedUsd}`);
+console.log(`Total: $${result.routing.classifierCost + result.cost.estimatedUsd}`);
+```
+
+### Force Provider
+
+Override everything and route all requests to a specific provider:
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY }
+  },
+  mode: "intelligent",
+  forceProvider: "anthropic"  // All requests go to Claude (bypasses classification)
+});
+```
+
+### Disable Classification/Escalation
+
+```javascript
+const router = createRouter({
+  providers: {
+    aibadgr: { apiKey: process.env.AIBADGR_API_KEY }
+  },
+  mode: "intelligent",
+  classification: { enabled: false },  // Disable AI classification
+  escalation: { enabled: false }       // Disable automatic escalation
+});
+```
+
+### Migration from Static to Intelligent Mode
+
+Existing code works unchanged. To migrate:
+
+```javascript
+// Before (static routing)
+const router = createRouter({
+  providers: { aibadgr: { apiKey: "..." } },
+  mode: "balanced",
+  routes: {
+    code: "anthropic",
+    reasoning: "openai"
+  }
+});
+
+// After (intelligent routing)
+const router = createRouter({
+  providers: { aibadgr: { apiKey: "..." } },
+  mode: "intelligent",       // Enable AI classification
+  policies: {                // Rename "routes" to "policies"
+    code: "anthropic",       // Policies override AI decisions
+    reasoning: "openai"
+  }
+  // routes still work as fallback if classification is disabled
+});
+```
+
+**Key differences:**
+- Static modes: `routes` determine routing
+- Intelligent mode: AI classifier determines routing, `policies` override it
+
 ## Configuration
 
 ### Environment Variables
@@ -174,12 +394,41 @@ const router = createRouter({
   },
 
   // Routing mode (quick presets)
-  mode?: "cheap" | "balanced" | "best",
+  mode?: "cheap" | "balanced" | "best" | "intelligent",
   // cheap: all tasks → aibadgr
   // balanced: code → anthropic, reasoning → openai, rest → aibadgr
   // best: premium providers where available
+  // intelligent: AI-powered classification (NEW)
 
-  // Custom routing table
+  // Policy overrides (for intelligent mode)
+  policies?: {
+    summarize?: "aibadgr" | "openai" | "anthropic",
+    rewrite?: "aibadgr" | "openai" | "anthropic",
+    classify?: "aibadgr" | "openai" | "anthropic",
+    extract?: "aibadgr" | "openai" | "anthropic",
+    chat?: "aibadgr" | "openai" | "anthropic",
+    code?: "aibadgr" | "openai" | "anthropic",
+    reasoning?: "aibadgr" | "openai" | "anthropic",
+    embeddings?: "aibadgr" | "openai",
+  },
+
+  // Force all requests to specific provider (bypasses everything)
+  forceProvider?: "aibadgr" | "openai" | "anthropic",
+
+  // Classification configuration (intelligent mode)
+  classification?: {
+    enabled?: boolean,        // default: true in intelligent mode
+    model?: string,          // default: "gpt-4o-mini"
+  },
+
+  // Escalation configuration (intelligent mode)
+  escalation?: {
+    enabled?: boolean,        // default: true in intelligent mode
+    minLength?: number,       // default: 100 (tokens)
+    checkUncertainty?: boolean, // default: false
+  },
+
+  // Custom routing table (legacy, fallback for intelligent mode)
   routes?: {
     summarize?: "aibadgr" | "openai" | "anthropic",
     rewrite?: "aibadgr" | "openai" | "anthropic",

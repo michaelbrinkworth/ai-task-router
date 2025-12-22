@@ -14,11 +14,19 @@ import {
   TaskName,
   ProviderAdapter,
   Attempt,
+  RouterMode,
+  ClassificationConfig,
+  EscalationConfig,
+  ClassificationResult,
+  RoutingMetadata,
 } from "./types.js";
 import { AIBadgrProvider } from "./providers/aibadgr.js";
 import { OpenAIProvider } from "./providers/openai.js";
 import { AnthropicProvider } from "./providers/anthropic.js";
 import { shouldFallback, getErrorStatus, sleep, validateTask, VALID_TASKS } from "./utils.js";
+import { classifyRequest } from "./classifier.js";
+import { resolveProvider } from "./policy.js";
+import { evaluateEscalation, getEscalationProvider } from "./escalation.js";
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_RETRIES = 1;
@@ -42,10 +50,14 @@ export class Router {
     defaultProvider: ProviderName;
     routes: Partial<Record<TaskName, ProviderName>>;
     fallback: Partial<Record<TaskName, ProviderName[]>>;
-    mode: "cheap" | "balanced" | "best";
+    mode: RouterMode;
     timeoutMs: number;
     maxRetries: number;
     fallbackPolicy: "enabled" | "none";
+    policies?: Partial<Record<TaskName, ProviderName>>;
+    forceProvider?: ProviderName;
+    classification: ClassificationConfig;
+    escalation: EscalationConfig;
     onResult?: (event: any) => void;
     onError?: (event: any) => void;
   };
@@ -94,6 +106,8 @@ export class Router {
       routes = this.applyModeDefaults(config.mode, routes);
     }
 
+    const isIntelligentMode = config.mode === "intelligent";
+
     this.config = {
       defaultProvider: config.defaultProvider || "aibadgr",
       routes,
@@ -102,6 +116,17 @@ export class Router {
       timeoutMs: config.timeoutMs || DEFAULT_TIMEOUT_MS,
       maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
       fallbackPolicy: config.fallbackPolicy || "enabled",
+      policies: config.policies,
+      forceProvider: config.forceProvider,
+      classification: {
+        enabled: config.classification?.enabled ?? isIntelligentMode,
+        model: config.classification?.model,
+      },
+      escalation: {
+        enabled: config.escalation?.enabled ?? isIntelligentMode,
+        minLength: config.escalation?.minLength ?? 100,
+        checkUncertainty: config.escalation?.checkUncertainty ?? false,
+      },
       onResult: config.onResult,
       onError: config.onError,
     };
@@ -155,7 +180,7 @@ export class Router {
   }
 
   private applyModeDefaults(
-    mode: "cheap" | "balanced" | "best",
+    mode: RouterMode,
     routes: Partial<Record<TaskName, ProviderName>>
   ): Partial<Record<TaskName, ProviderName>> {
     if (mode === "cheap") {
@@ -186,6 +211,10 @@ export class Router {
         reasoning: this.providers.has("openai") ? "openai" : "aibadgr",
         chat: this.providers.has("anthropic") ? "anthropic" : "aibadgr",
       };
+    } else if (mode === "intelligent") {
+      // Intelligent mode: classification will override routes at runtime
+      // Keep existing routes as fallback (used when classifier is disabled or unavailable)
+      return routes;
     }
     return routes;
   }
@@ -256,7 +285,78 @@ export class Router {
     return issues;
   }
 
+  private async selectProviderWithClassification(
+    task: TaskName,
+    request: ChatRunRequest | EmbeddingsRunRequest,
+    requestProvider?: ProviderName
+  ): Promise<{
+    provider: ProviderName;
+    classification?: ClassificationResult;
+    classifierTokens?: number;
+    classifierCost?: number;
+    routing: RoutingMetadata;
+  }> {
+    let classification: ClassificationResult | undefined;
+    let classifierTokens: number | undefined;
+    let classifierCost: number | undefined;
+
+    // Run classification if intelligent mode is enabled
+    if (this.config.mode === "intelligent" && this.config.classification.enabled) {
+      try {
+        const aibadgrConfig = this.originalConfig.providers.aibadgr;
+        const classificationResult = await classifyRequest(
+          request,
+          aibadgrConfig.apiKey,
+          aibadgrConfig.baseUrl,
+          this.config.classification.model
+        );
+
+        classification = classificationResult.classification;
+        classifierTokens = classificationResult.tokens;
+        classifierCost = classificationResult.cost;
+      } catch (error) {
+        console.warn(
+          "[@aibadgr/ai-task-router] Classification failed, continuing with static routing:",
+          error
+        );
+      }
+    }
+
+    // Resolve provider using policy system
+    const availableProviders = Array.from(this.providers.keys());
+    const resolution = resolveProvider(
+      this.config.mode,
+      task,
+      requestProvider,
+      this.config.forceProvider,
+      this.config.policies,
+      classification,
+      this.config.routes,
+      this.config.defaultProvider,
+      availableProviders
+    );
+
+    const routing: RoutingMetadata = {
+      classifier: classification,
+      classifierTokens,
+      classifierCost,
+      policyApplied: resolution.policyApplied,
+      selectedProvider: resolution.provider,
+      reason: resolution.reason,
+      mode: this.config.mode,
+    };
+
+    return {
+      provider: resolution.provider,
+      classification,
+      classifierTokens,
+      classifierCost,
+      routing,
+    };
+  }
+
   private selectProvider(task: TaskName, requestProvider?: ProviderName): ProviderName {
+    // Legacy sync method for backward compatibility
     // 1. Explicit provider override
     if (requestProvider) {
       return requestProvider;
@@ -309,11 +409,19 @@ export class Router {
     // Validate task
     validateTask(task);
     
-    const primaryProvider = this.selectProvider(task, request.provider);
+    const startTime = Date.now();
+
+    // Select provider with classification (if intelligent mode)
+    const selection = await this.selectProviderWithClassification(
+      task,
+      request,
+      request.provider
+    );
+
+    const primaryProvider = selection.provider;
     const fallbackProviders = request.provider ? [] : this.getFallbackProviders(task, primaryProvider);
 
     const attempts: Attempt[] = [];
-    const startTime = Date.now();
 
     // Try primary provider with retries
     const provider = this.providers.get(primaryProvider);
@@ -326,10 +434,89 @@ export class Router {
       );
     }
 
+    let response: ChatRunResponse | undefined;
+    let escalationAttempted = false;
+
     for (let retry = 0; retry <= this.config.maxRetries; retry++) {
       try {
-        const response = await this.executeWithTimeout(provider.chat(request), this.config.timeoutMs);
+        response = await this.executeWithTimeout(provider.chat(request), this.config.timeoutMs);
         response.attempts = [...attempts, ...response.attempts];
+        response.routing = selection.routing;
+
+        // Evaluate escalation (only once, not on retries)
+        if (
+          retry === 0 &&
+          !escalationAttempted &&
+          this.config.mode === "intelligent" &&
+          this.config.escalation.enabled
+        ) {
+          const escalationEval = evaluateEscalation(
+            response,
+            request.json || false,
+            selection.classification,
+            this.config.escalation
+          );
+
+          if (escalationEval.shouldEscalate) {
+            const escalationProvider = getEscalationProvider(
+              primaryProvider,
+              Array.from(this.providers.keys())
+            );
+
+            if (escalationProvider) {
+              console.log(
+                `[@aibadgr/ai-task-router] Escalating from ${primaryProvider} to ${escalationProvider}: ${escalationEval.reason}`
+              );
+
+              escalationAttempted = true;
+
+              // Try escalation provider
+              const escalationAdapter = this.providers.get(escalationProvider);
+              if (escalationAdapter) {
+                try {
+                  const escalatedResponse = await this.executeWithTimeout(
+                    escalationAdapter.chat(request),
+                    this.config.timeoutMs
+                  );
+
+                  escalatedResponse.attempts = [
+                    ...response.attempts,
+                    ...escalatedResponse.attempts,
+                  ];
+
+                  // Update routing metadata with escalation info
+                  escalatedResponse.routing = {
+                    ...selection.routing,
+                    selectedProvider: escalationProvider as ProviderName,
+                    escalated: true,
+                    escalationReason: escalationEval.reason,
+                  };
+
+                  // Fire onResult hook
+                  if (this.config.onResult) {
+                    this.config.onResult({
+                      provider: escalationProvider as ProviderName,
+                      task,
+                      latencyMs: Date.now() - startTime,
+                      usage: escalatedResponse.usage,
+                      cost: escalatedResponse.cost,
+                      attempts: escalatedResponse.attempts,
+                      routing: escalatedResponse.routing,
+                    });
+                  }
+
+                  return escalatedResponse;
+                } catch (escalationError) {
+                  console.warn(
+                    `[@aibadgr/ai-task-router] Escalation failed, using original response:`,
+                    escalationError
+                  );
+                  // Continue with original response
+                }
+              }
+            }
+          }
+        }
 
         // Fire onResult hook
         if (this.config.onResult) {
@@ -340,6 +527,7 @@ export class Router {
             usage: response.usage,
             cost: response.cost,
             attempts: response.attempts,
+            routing: response.routing,
           });
         }
 
@@ -372,6 +560,13 @@ export class Router {
         );
         response.attempts = [...attempts, ...response.attempts];
 
+        // Add routing metadata for fallback
+        response.routing = {
+          ...selection.routing,
+          selectedProvider: fallbackProvider,
+          reason: `Fallback to ${fallbackProvider} after primary provider failed`,
+        };
+
         // Fire onResult hook
         if (this.config.onResult) {
           this.config.onResult({
@@ -381,6 +576,7 @@ export class Router {
             usage: response.usage,
             cost: response.cost,
             attempts: response.attempts,
+            routing: response.routing,
           });
         }
 
@@ -441,11 +637,19 @@ export class Router {
 
   async embed(request: EmbeddingsRunRequest): Promise<EmbeddingsResponse> {
     const task = "embeddings";
-    const primaryProvider = this.selectProvider(task, request.provider);
+    const startTime = Date.now();
+
+    // Select provider with classification (if intelligent mode)
+    const selection = await this.selectProviderWithClassification(
+      task,
+      request,
+      request.provider
+    );
+
+    const primaryProvider = selection.provider;
     const fallbackProviders = request.provider ? [] : this.getFallbackProviders(task, primaryProvider);
 
     const attempts: Attempt[] = [];
-    const startTime = Date.now();
 
     // Try primary provider
     const provider = this.providers.get(primaryProvider);
@@ -468,6 +672,11 @@ export class Router {
           this.config.timeoutMs
         );
         response.attempts = [{ provider: primaryProvider, ok: false, error: "Anthropic doesn't support embeddings" }];
+        response.routing = {
+          ...selection.routing,
+          selectedProvider: fallbackProviders[0],
+          reason: `Fallback to ${fallbackProviders[0]} (Anthropic doesn't support embeddings)`,
+        };
         return response;
       }
     }
@@ -479,6 +688,7 @@ export class Router {
           this.config.timeoutMs
         );
         response.attempts = [...attempts, ...response.attempts];
+        response.routing = selection.routing;
 
         // Fire onResult hook
         if (this.config.onResult) {
@@ -489,6 +699,7 @@ export class Router {
             usage: response.usage,
             cost: response.cost,
             attempts: response.attempts,
+            routing: response.routing,
           });
         }
 
@@ -522,6 +733,13 @@ export class Router {
         );
         response.attempts = [...attempts, ...response.attempts];
 
+        // Add routing metadata for fallback
+        response.routing = {
+          ...selection.routing,
+          selectedProvider: fallbackProvider,
+          reason: `Fallback to ${fallbackProvider} after primary provider failed`,
+        };
+
         if (this.config.onResult) {
           this.config.onResult({
             provider: fallbackProvider,
@@ -530,6 +748,7 @@ export class Router {
             usage: response.usage,
             cost: response.cost,
             attempts: response.attempts,
+            routing: response.routing,
           });
         }
 
