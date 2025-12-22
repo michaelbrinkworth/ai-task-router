@@ -212,8 +212,8 @@ export class Router {
         chat: this.providers.has("anthropic") ? "anthropic" : "aibadgr",
       };
     } else if (mode === "intelligent") {
-      // Intelligent mode: classification will override routes
-      // Keep default routes as fallback
+      // Intelligent mode: classification will override routes at runtime
+      // Keep existing routes as fallback (used when classifier is disabled or unavailable)
       return routes;
     }
     return routes;

@@ -34,6 +34,12 @@ Return only JSON, no other text.`;
 const DEFAULT_CLASSIFICATION_MODEL = "gpt-4o-mini";
 
 /**
+ * Maximum input length for classification (cost optimization)
+ * Longer inputs are truncated to this length
+ */
+const MAX_CLASSIFICATION_INPUT_LENGTH = 500;
+
+/**
  * Classify a request using AI to determine optimal routing
  * 
  * @param request - The chat or embeddings request to classify
@@ -57,7 +63,7 @@ export async function classifyRequest(
     const inputText = extractInputText(request);
 
     // Truncate input for classification (save costs)
-    const truncatedInput = inputText.substring(0, 500);
+    const truncatedInput = inputText.substring(0, MAX_CLASSIFICATION_INPUT_LENGTH);
 
     // Create classification prompt
     const classificationPrompt = CLASSIFICATION_PROMPT.replace(

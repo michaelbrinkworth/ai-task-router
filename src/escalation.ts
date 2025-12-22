@@ -121,8 +121,8 @@ function detectUncertaintyPatterns(output: string): boolean {
  * @returns Next provider to try, or undefined if none available
  */
 export function getEscalationProvider(
-  currentProvider: string,
-  availableProviders: string[]
+  currentProvider: ProviderName,
+  availableProviders: ProviderName[]
 ): ProviderName | undefined {
   // Filter out current provider
   const remainingProviders = availableProviders.filter(
@@ -143,5 +143,5 @@ export function getEscalationProvider(
   }
 
   // Fallback to first remaining provider
-  return remainingProviders[0] as ProviderName | undefined;
+  return remainingProviders[0];
 }
